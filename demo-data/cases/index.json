@@ -4,11 +4,11 @@
   "cases": [
     {
       "case_id": "demo-cardiac-transfer-001",
-      "patient_display": "演示患者 A01，男，62 岁",
+      "patient_display": "周启明（A01），男，62 岁",
       "destination_department": "心内科",
-      "transfer_reason": "反复胸部不适，需进一步核验外院材料",
+      "transfer_reason": "反复胸部不适，外院材料时间跨度长、关键检查分散，需在接诊前整理证据链并提示待补充材料",
       "node_count": 6,
-      "abnormal_flag_count": 4
+      "abnormal_flag_count": 5
     },
     {
       "case_id": "demo-neuro-transfer-002",

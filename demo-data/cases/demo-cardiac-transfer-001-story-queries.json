@@ -1,0 +1,112 @@
+{
+  "synthetic": true,
+  "notice": "合成演示数据，仅用于演示讲解与证据检索，不构成诊断或治疗建议。",
+  "case_id": "demo-cardiac-transfer-001",
+  "patient_display": "周启明（A01），男，62 岁",
+  "demo_title": "A01 心内科转院病例：把散落外院材料串成可核验证据时间轴",
+  "one_sentence_story": "周启明（A01）携带半年多外院纸质材料转入心内科，系统在接诊前把最早症状、异常检验、住院检查、转院建议和缺失材料整理成一条可点击核验的证据链。",
+  "story_arc": [
+    {
+      "step": 1,
+      "date": "2024-03-12",
+      "title": "系统找到最早起点",
+      "talk_track": "先看时间轴最左侧：患者最早不是从转院那天开始，而是在 2024-03-12 急诊记录里出现胸部不适。系统把急诊病历和心电图放在同一节点，并把 ST-T 改变标成待医生核验。",
+      "feature_to_show": "横向时间轴、节点摘要、原图证据定位",
+      "node_id": "node-card-20240312",
+      "anchor_ids": ["ev-card-20240312-chief", "ev-card-20240312-ecg-stt"]
+    },
+    {
+      "step": 2,
+      "date": "2024-05-08",
+      "title": "系统把症状和检验放到同一个复诊节点",
+      "talk_track": "第二个节点展示复诊材料：胸闷反复和 CK-MB 标记来自同一批外院材料。医生不需要在多张纸里来回翻，直接点字段就能看到 OCR 原文和位置。",
+      "feature_to_show": "结构化字段、异常字段筛选、证据 modal",
+      "node_id": "node-card-20240508",
+      "anchor_ids": ["ev-card-20240508-symptom", "ev-card-20240508-ckmb"]
+    },
+    {
+      "step": 3,
+      "date": "2024-09-21",
+      "title": "系统显式标出低置信度，避免过度自动化",
+      "talk_track": "住院观察节点里，动态心电图摘要的 OCR 置信度低于阈值。这里正好说明我们的系统不是替医生下判断，而是把可疑字段标出来等待人工核验。",
+      "feature_to_show": "低置信度样式、需复核状态、医生核验按钮",
+      "node_id": "node-card-20240921",
+      "anchor_ids": ["ev-card-20240921-holter"]
+    },
+    {
+      "step": 4,
+      "date": "2024-10-02",
+      "title": "系统把转院线索与出院小结连接起来",
+      "talk_track": "出院小结里出现上级医院进一步评估，这是转院原因的关键文字。我们只展示外院原文和证据位置，不把它包装成系统诊断。",
+      "feature_to_show": "与转院原因相关筛选、外院原文追溯、材料完整性边界",
+      "node_id": "node-card-20241002",
+      "anchor_ids": ["ev-card-20241002-diagnosis-text", "ev-card-20241002-referral"]
+    },
+    {
+      "step": 5,
+      "date": "2025-01-15",
+      "title": "系统在转院前复诊节点展示多证据联查",
+      "talk_track": "这是核心演示节点：肌钙蛋白 I、胸前区不适、ST-T 改变和转上级医院评估同时出现。点击肌钙蛋白或 ST-T 字段，再点历史关联记录，可以把更早的 CK-MB、ST-T 和胸部不适证据召回。",
+      "feature_to_show": "证据联查、历史关联记录、top-k 原文摘要、原图 bbox 高亮",
+      "node_id": "node-card-20250115",
+      "anchor_ids": ["ev-card-20250115-tni", "ev-card-20250115-stt", "ev-card-20250115-transfer-plan"]
+    },
+    {
+      "step": 6,
+      "date": "2025-01-16",
+      "title": "系统最后给出接诊前摘要和材料缺口",
+      "talk_track": "最后切到接诊前摘要：系统列出转院相关节点、待核验字段数量和缺失材料提示。它不说患者该怎么治疗，只说当前材料里有什么、证据在哪里、还有什么没看到。",
+      "feature_to_show": "接诊前摘要、材料完整性提示、安全边界文案",
+      "node_id": "node-card-20250116",
+      "anchor_ids": ["ev-card-20250116-missing", "ev-card-20250116-boundary"]
+    }
+  ],
+  "recommended_search_questions": [
+    {
+      "question": "这个患者最早什么时候出现胸部不适？",
+      "expected_terms": ["胸部不适", "胸前区疼痛", "胸痛"],
+      "expected_nodes": ["node-card-20240312", "node-card-20240921", "node-card-20250115"],
+      "talk_track": "用于演示同义词和时间倒排：系统会从多个时间点召回胸部不适、胸闷、胸前区不适等相关原文。"
+    },
+    {
+      "question": "肌钙蛋白相关记录有哪些？",
+      "expected_terms": ["肌钙蛋白", "肌钙蛋白 I", "TnI", "cTnI"],
+      "expected_nodes": ["node-card-20250115"],
+      "talk_track": "用于演示关键检验字段定位：结果不是诊断，只是把材料中的指标、参考范围和原图位置拿出来。"
+    },
+    {
+      "question": "材料里有没有提到转上级医院？",
+      "expected_terms": ["转院", "转上级医院", "转诊", "进一步诊治"],
+      "expected_nodes": ["node-card-20241002", "node-card-20250115", "node-card-20250116"],
+      "talk_track": "用于演示转院原因联查：系统能把出院小结、复诊记录和接收记录中的转院相关文字串起来。"
+    },
+    {
+      "question": "ST-T 改变在哪些材料中出现？",
+      "expected_terms": ["ST-T", "心电图", "复查"],
+      "expected_nodes": ["node-card-20240312", "node-card-20250115"],
+      "talk_track": "用于演示跨材料重复线索：早期急诊和转院前复诊都能被召回，医生可点回原图核验。"
+    },
+    {
+      "question": "当前材料缺少哪些检查材料？",
+      "expected_terms": ["未见", "冠脉 CTA", "造影", "材料提示"],
+      "expected_nodes": ["node-card-20250116"],
+      "talk_track": "用于演示材料完整性提示：系统只提示当前材料集中没有看到什么，不声称临床上必须做什么。"
+    }
+  ],
+  "front_end_demo_sequence": [
+    "选择病例：周启明（A01）｜心内科。",
+    "先停留在医生时间轴，看顶部患者、转院路径、覆盖时间、节点数和待核验字段数。",
+    "点击“只看异常”，展示系统能快速收敛到 5 个待核验节点。",
+    "点开 2025-01-15 节点，展示结构化字段、证据链、OCR 片段和原始材料。",
+    "点击“关键指标：肌钙蛋白 I”，打开原图证据 modal，展示 bbox 高亮和医生核验按钮。",
+    "点击字段旁边“历史关联记录”，讲系统如何把同类证据从历史材料里召回。",
+    "切到“与转院原因相关”，展示从出院小结到转入接收记录的完整转院链条。",
+    "切到“接诊前摘要”，用材料完整性提示收尾：系统只做整理、检索和核验，不给诊疗建议。"
+  ],
+  "replacement_notes": {
+    "case_fixture_target": "把 demo-cardiac-transfer-001.json 复制到 C:/Users/Administrator/zgcHack/demo-data/cases/demo-cardiac-transfer-001.json 后，可替换 A01 fixture。",
+    "index_target": "把 index.json 中 A01 条目合并到 C:/Users/Administrator/zgcHack/demo-data/cases/index.json，可更新病例选择器显示名与异常数量。",
+    "asset_requirement": "本 JSON 复用当前仓库已存在的 cardiac-001 SVG 资源，因此不需要额外新增素材文件。",
+    "safety_boundary": "所有材料、医院、患者和 OCR 均为合成演示内容；不要混入真实患者资料。"
+  }
+}

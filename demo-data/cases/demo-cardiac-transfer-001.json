@@ -3,226 +3,402 @@
   "notice": "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。",
   "case_id": "demo-cardiac-transfer-001",
   "patient": {
-    "display_name": "演示患者 A01",
+    "display_name": "周启明（A01）",
     "sex": "男",
     "age_display": "62 岁"
   },
   "transfer": {
-    "origin_hospital": "青禾县中心医院",
+    "origin_hospital": "青禾县中心医院（虚构）",
     "destination_hospital": "澄明医学中心",
     "destination_department": "心内科",
-    "reason": "反复胸部不适，需进一步核验外院材料",
+    "reason": "反复胸部不适，外院材料时间跨度长、关键检查分散，需在接诊前整理证据链并提示待补充材料",
     "coverage": "2024-03-12 至 2025-01-16"
   },
   "timeline_nodes": [
     {
       "node_id": "node-card-20240312",
       "date": "2024-03-12",
-      "hospital_department": "青禾县中心医院｜急诊科",
+      "hospital_department": "青禾县中心医院（虚构）｜急诊科",
       "document_type": "急诊病历 + 心电图报告",
-      "headline": "首次胸部不适就诊材料",
-      "summary": "外院记录记载胸部不适，并包含需核验的心电图描述。",
+      "headline": "首次胸部不适就诊被系统定位为故事起点",
+      "summary": "患者携带的最早材料记录“胸部不适 2 小时”。系统把急诊病历和心电图描述合并为同一时间节点，并把 ST-T 改变标为待医生核验字段。",
       "tags": [
-        {
-          "label": "首次记录",
-          "level": "info"
-        },
-        {
-          "label": "异常字段待核验",
-          "level": "warning"
-        }
+        {"label": "首次记录", "level": "info"},
+        {"label": "胸痛线索", "level": "warning"},
+        {"label": "待医生核验", "level": "warning"}
       ],
       "related_to_transfer_reason": true,
       "has_abnormal_flag": true,
-      "materials": [
-        "mat-card-20240312-ecg"
-      ],
+      "materials": ["mat-card-20240312-ecg"],
       "structured_fields": {
+        "材料类型": "急诊病历 + 心电图报告",
         "主诉记录": "胸部不适 2 小时",
-        "检查记录": "ST-T 改变（待核验）",
-        "处理记录": "建议门诊随访"
+        "心电图描述": "ST-T 改变（外院原文，待医生核验）",
+        "处理记录": "外院原文：建议门诊随访并复查",
+        "故事价值": "系统自动找到最早症状起点，后续联查可追溯所有胸部不适相关记录"
       },
-      "ocr_excerpt": "合成演示材料｜主诉：胸部不适 2 小时。心电图记录：ST-T 改变。建议：进一步复查。",
+      "ocr_excerpt": "合成演示材料｜急诊科｜2024-03-12｜主诉：胸部不适 2 小时。心电图记录：ST-T 改变。处理记录：建议门诊随访并复查。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-ecg",
+          "anchor_id": "ev-card-20240312-chief",
           "material_id": "mat-card-20240312-ecg",
-          "field_key": "检查记录",
-          "display_value": "ST-T 改变（待核验）",
+          "field_key": "主诉记录",
+          "display_value": "胸部不适 2 小时",
+          "page_or_image": "第 1 张，第 3 行",
+          "locator_text": "主诉：胸部不适 2 小时",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240312-chief"],
+          "bbox": [48, 126, 420, 156],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240312-ecg-stt",
+          "material_id": "mat-card-20240312-ecg",
+          "field_key": "心电图描述",
+          "display_value": "ST-T 改变（外院原文，待医生核验）",
           "page_or_image": "第 1 张，第 4 行",
           "locator_text": "ST-T 改变",
           "confidence": 0.88,
+          "ocr_confidence": 0.88,
+          "extraction_confidence": 0.86,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240312-ecg"],
+          "bbox": [48, 166, 520, 202],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240312-followup",
+          "material_id": "mat-card-20240312-ecg",
+          "field_key": "处理记录",
+          "display_value": "外院原文：建议门诊随访并复查",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "建议门诊随访并复查",
+          "confidence": 0.93,
+          "ocr_confidence": 0.93,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240312-plan"],
+          "bbox": [48, 210, 540, 242],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     {
       "node_id": "node-card-20240508",
       "date": "2024-05-08",
-      "hospital_department": "青禾县中心医院｜心内科",
+      "hospital_department": "青禾县中心医院（虚构）｜心内科门诊",
       "document_type": "门诊病历 + 化验单",
-      "headline": "复诊材料整理",
-      "summary": "材料中出现一项带标记的检验字段，并记载继续随访。",
+      "headline": "复诊材料出现检验异常线索",
+      "summary": "复诊材料中同时出现“胸闷反复”和 CK-MB 轻度升高标记。系统把门诊记录与化验单对齐，形成可点击核验的异常字段。",
       "tags": [
-        {
-          "label": "复诊",
-          "level": "info"
-        },
-        {
-          "label": "异常字段待核验",
-          "level": "warning"
-        }
+        {"label": "复诊", "level": "info"},
+        {"label": "检验异常线索", "level": "danger"},
+        {"label": "待医生核验", "level": "warning"}
       ],
       "related_to_transfer_reason": true,
       "has_abnormal_flag": true,
-      "materials": [
-        "mat-card-20240508-lab"
-      ],
+      "materials": ["mat-card-20240508-lab"],
       "structured_fields": {
         "材料类型": "门诊病历 + 化验单",
-        "检验字段": "CK-MB 轻度升高标记（待核验）",
-        "处理记录": "继续随访"
+        "症状记录": "胸闷反复，活动后明显（外院原文，待医生核验）",
+        "检验字段": "CK-MB：28 U/L（轻度升高标记，待医生核验）",
+        "处理记录": "外院原文：继续随访，建议完善心肌酶复查",
+        "故事价值": "系统把症状词和检验指标放在同一节点，支持医生点击字段查看原始证据"
       },
-      "ocr_excerpt": "合成演示材料｜CK-MB：标记轻度升高。处理记录：继续门诊随访。",
+      "ocr_excerpt": "合成演示材料｜心内科门诊｜2024-05-08｜胸闷反复，活动后明显。CK-MB：28 U/L ↑。处理记录：继续随访，建议完善心肌酶复查。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-ckmb",
+          "anchor_id": "ev-card-20240508-symptom",
+          "material_id": "mat-card-20240508-lab",
+          "field_key": "症状记录",
+          "display_value": "胸闷反复，活动后明显（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "胸闷反复，活动后明显",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240508-symptom"],
+          "bbox": [52, 132, 532, 164],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240508-ckmb",
           "material_id": "mat-card-20240508-lab",
           "field_key": "检验字段",
-          "display_value": "CK-MB 轻度升高标记（待核验）",
+          "display_value": "CK-MB：28 U/L（轻度升高标记，待医生核验）",
           "page_or_image": "第 1 张，第 5 行",
-          "locator_text": "CK-MB",
+          "locator_text": "CK-MB：28 U/L ↑",
           "confidence": 0.89,
+          "ocr_confidence": 0.89,
+          "extraction_confidence": 0.87,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240508-ckmb"],
+          "bbox": [52, 176, 534, 214],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240508-plan",
+          "material_id": "mat-card-20240508-lab",
+          "field_key": "处理记录",
+          "display_value": "外院原文：继续随访，建议完善心肌酶复查",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "建议完善心肌酶复查",
+          "confidence": 0.92,
+          "ocr_confidence": 0.92,
+          "extraction_confidence": 0.91,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240508-plan"],
+          "bbox": [52, 222, 546, 258],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     {
       "node_id": "node-card-20240921",
       "date": "2024-09-21",
-      "hospital_department": "青禾县中心医院｜住院部",
-      "document_type": "入院记录 + 检查报告",
-      "headline": "住院观察材料",
-      "summary": "包含心超与动态心电图报告摘要，供转入医院查阅。",
+      "hospital_department": "青禾县中心医院（虚构）｜住院部",
+      "document_type": "入院记录 + 心超 + 动态心电图报告",
+      "headline": "住院观察阶段材料被合并成检查组",
+      "summary": "住院材料分散在入院记录、心超和动态心电图摘要中。系统把多份检查归到同一时间节点，并暴露一个低置信度字段，演示“不是自动下结论，而是提醒人工核验”。",
       "tags": [
-        {
-          "label": "住院",
-          "level": "info"
-        },
-        {
-          "label": "检查材料",
-          "level": "success"
-        }
+        {"label": "住院", "level": "info"},
+        {"label": "多材料合并", "level": "success"},
+        {"label": "低置信度", "level": "warning"}
       ],
       "related_to_transfer_reason": true,
-      "has_abnormal_flag": false,
-      "materials": [
-        "mat-card-20240921-inpatient"
-      ],
+      "has_abnormal_flag": true,
+      "materials": ["mat-card-20240921-inpatient"],
       "structured_fields": {
-        "材料类型": "入院记录 + 检查报告",
-        "检查项目": "心超、动态心电图",
-        "内容状态": "外院材料待核验"
+        "材料类型": "入院记录 + 心超 + 动态心电图报告",
+        "入院原因": "胸部不适反复发作 6 月余（外院原文，待医生核验）",
+        "心超摘要": "左室舒张功能减低提示（外院原文，待医生核验）",
+        "动态心电图摘要": "偶发室性早搏记录（低置信度，待医生核验）",
+        "故事价值": "系统把多页材料聚合成一个节点，并用低置信度提示降低误读风险"
       },
-      "ocr_excerpt": "合成演示材料｜检查项目：心超、动态心电图。备注：材料供转诊复核。",
+      "ocr_excerpt": "合成演示材料｜住院部｜2024-09-21｜入院原因：胸部不适反复发作 6 月余。心超摘要：左室舒张功能减低提示。动态心电图摘要：偶发室性早搏记录。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-tests",
+          "anchor_id": "ev-card-20240921-admission-reason",
           "material_id": "mat-card-20240921-inpatient",
-          "field_key": "检查项目",
-          "display_value": "心超、动态心电图",
+          "field_key": "入院原因",
+          "display_value": "胸部不适反复发作 6 月余（外院原文，待医生核验）",
           "page_or_image": "第 1 张，第 3 行",
-          "locator_text": "检查项目",
-          "confidence": 0.93,
+          "locator_text": "胸部不适反复发作 6 月余",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "extraction_confidence": 0.93,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": false
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240921-reason"],
+          "bbox": [52, 126, 540, 158],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240921-echo",
+          "material_id": "mat-card-20240921-inpatient",
+          "field_key": "心超摘要",
+          "display_value": "左室舒张功能减低提示（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "左室舒张功能减低提示",
+          "confidence": 0.91,
+          "ocr_confidence": 0.91,
+          "extraction_confidence": 0.89,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240921-echo"],
+          "bbox": [52, 176, 540, 214],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240921-holter",
+          "material_id": "mat-card-20240921-inpatient",
+          "field_key": "动态心电图摘要",
+          "display_value": "偶发室性早搏记录（低置信度，待医生核验）",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "偶发室性早搏",
+          "confidence": 0.78,
+          "ocr_confidence": 0.78,
+          "extraction_confidence": 0.76,
+          "verification_status": "needs_review",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240921-holter"],
+          "bbox": [52, 226, 540, 264],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     {
       "node_id": "node-card-20241002",
       "date": "2024-10-02",
-      "hospital_department": "青禾县中心医院｜住院部",
+      "hospital_department": "青禾县中心医院（虚构）｜住院部",
       "document_type": "出院小结",
-      "headline": "出院小结材料",
-      "summary": "小结记载倾向性描述及到上级医院进一步评估的文字。",
+      "headline": "出院小结给出转上级医院线索",
+      "summary": "出院小结里出现“冠心病可能”和“上级医院进一步评估”的外院原文。系统只展示原文与证据位置，不替代医生作出诊断。",
       "tags": [
-        {
-          "label": "出院小结",
-          "level": "info"
-        },
-        {
-          "label": "转诊相关",
-          "level": "warning"
-        }
+        {"label": "出院小结", "level": "info"},
+        {"label": "转诊相关", "level": "danger"},
+        {"label": "外院原文", "level": "warning"}
       ],
       "related_to_transfer_reason": true,
       "has_abnormal_flag": true,
-      "materials": [
-        "mat-card-20241002-discharge"
-      ],
+      "materials": ["mat-card-20241002-discharge"],
       "structured_fields": {
         "材料类型": "出院小结",
-        "原文描述": "冠心病可能（外院原文，待核验）",
-        "出院建议记录": "上级医院进一步评估"
+        "出院原文描述": "冠心病可能（外院原文，待医生核验）",
+        "出院建议记录": "建议上级医院进一步评估（外院原文）",
+        "出院带药记录": "阿司匹林肠溶片、阿托伐他汀钙片（外院原文，待医生核验）",
+        "故事价值": "系统把转院原因与出院小结中的关键文字连接起来，方便讲述为什么需要接诊前整理"
       },
-      "ocr_excerpt": "合成演示材料｜原文描述：冠心病可能。建议：上级医院进一步评估。",
+      "ocr_excerpt": "合成演示材料｜出院小结｜2024-10-02｜出院原文描述：冠心病可能。建议：上级医院进一步评估。出院带药记录：阿司匹林肠溶片、阿托伐他汀钙片。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-discharge",
+          "anchor_id": "ev-card-20241002-diagnosis-text",
           "material_id": "mat-card-20241002-discharge",
-          "field_key": "原文描述",
-          "display_value": "冠心病可能（外院原文，待核验）",
-          "page_or_image": "第 1 张，诊断栏",
+          "field_key": "出院原文描述",
+          "display_value": "冠心病可能（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，出院诊断栏",
           "locator_text": "冠心病可能",
           "confidence": 0.93,
+          "ocr_confidence": 0.93,
+          "extraction_confidence": 0.91,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20241002-diagnosis"],
+          "bbox": [52, 142, 540, 178],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20241002-referral",
+          "material_id": "mat-card-20241002-discharge",
+          "field_key": "出院建议记录",
+          "display_value": "建议上级医院进一步评估（外院原文）",
+          "page_or_image": "第 1 张，出院医嘱栏",
+          "locator_text": "上级医院进一步评估",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "extraction_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20241002-referral"],
+          "bbox": [52, 194, 550, 232],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20241002-medication",
+          "material_id": "mat-card-20241002-discharge",
+          "field_key": "出院带药记录",
+          "display_value": "阿司匹林肠溶片、阿托伐他汀钙片（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，带药栏",
+          "locator_text": "阿司匹林肠溶片、阿托伐他汀钙片",
+          "confidence": 0.9,
+          "ocr_confidence": 0.9,
+          "extraction_confidence": 0.88,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20241002-medication"],
+          "bbox": [52, 246, 550, 284],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     {
       "node_id": "node-card-20250115",
       "date": "2025-01-15",
-      "hospital_department": "青禾县中心医院｜心内科",
+      "hospital_department": "青禾县中心医院（虚构）｜心内科门诊",
       "document_type": "门诊病历 + 化验单 + 心电图报告",
-      "headline": "转院前复诊材料",
-      "summary": "记录中存在带升高标记的检验字段，并出现转上级医院的文字。",
+      "headline": "转院前复诊形成核心证据节点",
+      "summary": "转院前一天的材料同时包含肌钙蛋白 I 升高标记、胸痛复发描述和“转上级医院进一步评估”。这是演示中最适合展示证据联查、异常筛选和原图定位的节点。",
       "tags": [
-        {
-          "label": "转院相关",
-          "level": "danger"
-        },
-        {
-          "label": "异常字段待核验",
-          "level": "danger"
-        }
+        {"label": "转院相关", "level": "danger"},
+        {"label": "关键检验", "level": "danger"},
+        {"label": "多证据联查", "level": "success"}
       ],
       "related_to_transfer_reason": true,
       "has_abnormal_flag": true,
-      "materials": [
-        "mat-card-20250115-lab",
-        "mat-card-20250115-note"
-      ],
+      "materials": ["mat-card-20250115-lab", "mat-card-20250115-note"],
       "structured_fields": {
         "材料类型": "门诊病历 + 化验单 + 心电图报告",
-        "关键指标": "肌钙蛋白 I：0.19 ng/mL（标记升高，待核验）",
-        "处理记录": "建议转上级医院进一步评估"
+        "关键指标": "肌钙蛋白 I：0.19 ng/mL（标记升高，待医生核验）",
+        "症状记录": "胸前区不适再次发作，伴心悸（外院原文，待医生核验）",
+        "心电图描述": "ST-T 改变较前复查仍见（外院原文，待医生核验）",
+        "处理记录": "建议转上级医院进一步评估（外院原文）",
+        "故事价值": "点击肌钙蛋白字段后，系统能联查到更早的 CK-MB、ST-T 和胸部不适记录"
       },
-      "ocr_excerpt": "合成演示材料｜肌钙蛋白 I：0.19 ng/mL ↑；参考范围：0.00–0.04 ng/mL。建议：转上级医院进一步评估。",
+      "ocr_excerpt": "合成演示材料｜心内科门诊｜2025-01-15｜肌钙蛋白 I：0.19 ng/mL ↑；参考范围：0.00–0.04 ng/mL。胸前区不适再次发作，伴心悸。心电图描述：ST-T 改变较前复查仍见。建议转上级医院进一步评估。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-tni",
+          "anchor_id": "ev-card-20250115-tni",
           "material_id": "mat-card-20250115-lab",
           "field_key": "关键指标",
-          "display_value": "肌钙蛋白 I：0.19 ng/mL（标记升高，待核验）",
+          "display_value": "肌钙蛋白 I：0.19 ng/mL（标记升高，待医生核验）",
           "page_or_image": "第 1 张，第 3 行",
-          "locator_text": "肌钙蛋白 I",
+          "locator_text": "肌钙蛋白 I：0.19 ng/mL ↑",
           "confidence": 0.91,
+          "ocr_confidence": 0.91,
+          "extraction_confidence": 0.9,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20250115-tni"],
+          "bbox": [42, 149, 552, 183],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250115-symptom",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "症状记录",
+          "display_value": "胸前区不适再次发作，伴心悸（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "胸前区不适再次发作，伴心悸",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250115-note-symptom"],
+          "bbox": [52, 132, 552, 168],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250115-stt",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "心电图描述",
+          "display_value": "ST-T 改变较前复查仍见（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "ST-T 改变较前复查仍见",
+          "confidence": 0.87,
+          "ocr_confidence": 0.87,
+          "extraction_confidence": 0.85,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20250115-note-stt"],
+          "bbox": [52, 180, 552, 216],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250115-transfer-plan",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "处理记录",
+          "display_value": "建议转上级医院进一步评估（外院原文）",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "转上级医院进一步评估",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250115-note-transfer"],
+          "bbox": [52, 228, 552, 264],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
@@ -231,40 +407,72 @@
       "date": "2025-01-16",
       "hospital_department": "澄明医学中心｜心内科",
       "document_type": "转入接收记录",
-      "headline": "目标医院接收材料",
-      "summary": "接收记录列出需继续补充核验的外院材料。",
+      "headline": "接收医院看到系统生成的材料完整性提示",
+      "summary": "目标医院接收记录显示外院材料已整理，同时系统提示当前材料中未见冠脉 CTA 或造影相关报告。该提示只用于材料整理，不构成诊疗建议。",
       "tags": [
-        {
-          "label": "转入记录",
-          "level": "info"
-        },
-        {
-          "label": "材料待补充",
-          "level": "warning"
-        }
+        {"label": "转入记录", "level": "info"},
+        {"label": "材料待补充", "level": "warning"},
+        {"label": "接诊前摘要", "level": "success"}
       ],
       "related_to_transfer_reason": true,
       "has_abnormal_flag": false,
-      "materials": [
-        "mat-card-20250116-transfer"
-      ],
+      "materials": ["mat-card-20250116-transfer"],
       "structured_fields": {
         "材料类型": "转入接收记录",
-        "接收状态": "外院材料已整理",
-        "材料提示": "未见冠脉 CTA 或造影相关材料"
+        "接收状态": "外院材料已整理，生成接诊前时间轴",
+        "材料提示": "未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充",
+        "系统边界": "仅整理材料和证据，不生成诊断或治疗意见",
+        "故事价值": "用最后一个节点收束演示：系统不是替医生判断，而是把已上传材料、证据和缺口讲清楚"
       },
-      "ocr_excerpt": "合成演示材料｜接收记录：外院材料已整理。材料提示：未见冠脉 CTA 或造影相关材料。",
+      "ocr_excerpt": "合成演示材料｜澄明医学中心心内科｜2025-01-16｜接收状态：外院材料已整理，生成接诊前时间轴。材料提示：未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充。",
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-missing",
+          "anchor_id": "ev-card-20250116-status",
+          "material_id": "mat-card-20250116-transfer",
+          "field_key": "接收状态",
+          "display_value": "外院材料已整理，生成接诊前时间轴",
+          "page_or_image": "第 1 张，接收记录栏",
+          "locator_text": "外院材料已整理",
+          "confidence": 0.97,
+          "ocr_confidence": 0.97,
+          "extraction_confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-status"],
+          "bbox": [52, 132, 552, 168],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250116-missing",
           "material_id": "mat-card-20250116-transfer",
           "field_key": "材料提示",
-          "display_value": "未见冠脉 CTA 或造影相关材料",
+          "display_value": "未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充",
           "page_or_image": "第 1 张，材料清单栏",
-          "locator_text": "材料提示",
+          "locator_text": "未见冠脉 CTA 或造影相关材料",
           "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.95,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": false
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-missing"],
+          "bbox": [52, 184, 552, 226],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250116-boundary",
+          "material_id": "mat-card-20250116-transfer",
+          "field_key": "系统边界",
+          "display_value": "仅整理材料和证据，不生成诊断或治疗意见",
+          "page_or_image": "第 1 张，安全提示栏",
+          "locator_text": "不生成诊断或治疗意见",
+          "confidence": 0.98,
+          "ocr_confidence": 0.98,
+          "extraction_confidence": 0.98,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-boundary"],
+          "bbox": [52, 238, 552, 276],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     }
@@ -272,122 +480,410 @@
   "materials": {
     "mat-card-20240312-ecg": {
       "material_id": "mat-card-20240312-ecg",
-      "title": "合成急诊病历与心电图报告",
+      "title": "合成急诊病历与心电图报告｜首次胸部不适",
       "image_url": "/assets/cardiac-001/2024-03-12-ecg.svg",
-      "ocr_text": "合成演示材料｜主诉：胸部不适 2 小时。心电图记录：ST-T 改变。建议：进一步复查。",
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜急诊科｜2024-03-12｜主诉：胸部不适 2 小时。心电图记录：ST-T 改变。处理记录：建议门诊随访并复查。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20240312-chief", "text": "主诉：胸部不适 2 小时。", "bbox": [48, 126, 420, 156], "confidence": 0.96},
+        {"block_id": "ocr-card-20240312-ecg", "text": "心电图记录：ST-T 改变。", "bbox": [48, 166, 520, 202], "confidence": 0.88},
+        {"block_id": "ocr-card-20240312-plan", "text": "处理记录：建议门诊随访并复查。", "bbox": [48, 210, 540, 242], "confidence": 0.93}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-ecg",
+          "anchor_id": "ev-card-20240312-chief",
           "material_id": "mat-card-20240312-ecg",
-          "field_key": "检查记录",
-          "display_value": "ST-T 改变（待核验）",
+          "field_key": "主诉记录",
+          "display_value": "胸部不适 2 小时",
+          "page_or_image": "第 1 张，第 3 行",
+          "locator_text": "主诉：胸部不适 2 小时",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240312-chief"],
+          "bbox": [48, 126, 420, 156],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240312-ecg-stt",
+          "material_id": "mat-card-20240312-ecg",
+          "field_key": "心电图描述",
+          "display_value": "ST-T 改变（外院原文，待医生核验）",
           "page_or_image": "第 1 张，第 4 行",
           "locator_text": "ST-T 改变",
           "confidence": 0.88,
+          "ocr_confidence": 0.88,
+          "extraction_confidence": 0.86,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240312-ecg"],
+          "bbox": [48, 166, 520, 202],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240312-followup",
+          "material_id": "mat-card-20240312-ecg",
+          "field_key": "处理记录",
+          "display_value": "外院原文：建议门诊随访并复查",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "建议门诊随访并复查",
+          "confidence": 0.93,
+          "ocr_confidence": 0.93,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240312-plan"],
+          "bbox": [48, 210, 540, 242],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     "mat-card-20240508-lab": {
       "material_id": "mat-card-20240508-lab",
-      "title": "合成门诊化验单",
+      "title": "合成门诊病历与化验单｜CK-MB 线索",
       "image_url": "/assets/cardiac-001/2024-05-08-lab.svg",
-      "ocr_text": "合成演示材料｜CK-MB：标记轻度升高。处理记录：继续门诊随访。",
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜心内科门诊｜2024-05-08｜胸闷反复，活动后明显。CK-MB：28 U/L ↑。处理记录：继续随访，建议完善心肌酶复查。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20240508-symptom", "text": "胸闷反复，活动后明显。", "bbox": [52, 132, 532, 164], "confidence": 0.94},
+        {"block_id": "ocr-card-20240508-ckmb", "text": "CK-MB：28 U/L ↑。", "bbox": [52, 176, 534, 214], "confidence": 0.89},
+        {"block_id": "ocr-card-20240508-plan", "text": "处理记录：继续随访，建议完善心肌酶复查。", "bbox": [52, 222, 546, 258], "confidence": 0.92}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-ckmb",
+          "anchor_id": "ev-card-20240508-symptom",
+          "material_id": "mat-card-20240508-lab",
+          "field_key": "症状记录",
+          "display_value": "胸闷反复，活动后明显（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "胸闷反复，活动后明显",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240508-symptom"],
+          "bbox": [52, 132, 532, 164],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240508-ckmb",
           "material_id": "mat-card-20240508-lab",
           "field_key": "检验字段",
-          "display_value": "CK-MB 轻度升高标记（待核验）",
+          "display_value": "CK-MB：28 U/L（轻度升高标记，待医生核验）",
           "page_or_image": "第 1 张，第 5 行",
-          "locator_text": "CK-MB",
+          "locator_text": "CK-MB：28 U/L ↑",
           "confidence": 0.89,
+          "ocr_confidence": 0.89,
+          "extraction_confidence": 0.87,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240508-ckmb"],
+          "bbox": [52, 176, 534, 214],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240508-plan",
+          "material_id": "mat-card-20240508-lab",
+          "field_key": "处理记录",
+          "display_value": "外院原文：继续随访，建议完善心肌酶复查",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "建议完善心肌酶复查",
+          "confidence": 0.92,
+          "ocr_confidence": 0.92,
+          "extraction_confidence": 0.91,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240508-plan"],
+          "bbox": [52, 222, 546, 258],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     "mat-card-20240921-inpatient": {
       "material_id": "mat-card-20240921-inpatient",
-      "title": "合成住院检查摘要",
+      "title": "合成住院检查摘要｜心超与动态心电图",
       "image_url": "/assets/cardiac-001/2024-09-21-inpatient.svg",
-      "ocr_text": "合成演示材料｜检查项目：心超、动态心电图。备注：材料供转诊复核。",
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜住院部｜2024-09-21｜入院原因：胸部不适反复发作 6 月余。心超摘要：左室舒张功能减低提示。动态心电图摘要：偶发室性早搏记录。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20240921-reason", "text": "入院原因：胸部不适反复发作 6 月余。", "bbox": [52, 126, 540, 158], "confidence": 0.95},
+        {"block_id": "ocr-card-20240921-echo", "text": "心超摘要：左室舒张功能减低提示。", "bbox": [52, 176, 540, 214], "confidence": 0.91},
+        {"block_id": "ocr-card-20240921-holter", "text": "动态心电图摘要：偶发室性早搏记录。", "bbox": [52, 226, 540, 264], "confidence": 0.78}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-tests",
+          "anchor_id": "ev-card-20240921-admission-reason",
           "material_id": "mat-card-20240921-inpatient",
-          "field_key": "检查项目",
-          "display_value": "心超、动态心电图",
+          "field_key": "入院原因",
+          "display_value": "胸部不适反复发作 6 月余（外院原文，待医生核验）",
           "page_or_image": "第 1 张，第 3 行",
-          "locator_text": "检查项目",
-          "confidence": 0.93,
+          "locator_text": "胸部不适反复发作 6 月余",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "extraction_confidence": 0.93,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": false
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20240921-reason"],
+          "bbox": [52, 126, 540, 158],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240921-echo",
+          "material_id": "mat-card-20240921-inpatient",
+          "field_key": "心超摘要",
+          "display_value": "左室舒张功能减低提示（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "左室舒张功能减低提示",
+          "confidence": 0.91,
+          "ocr_confidence": 0.91,
+          "extraction_confidence": 0.89,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240921-echo"],
+          "bbox": [52, 176, 540, 214],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20240921-holter",
+          "material_id": "mat-card-20240921-inpatient",
+          "field_key": "动态心电图摘要",
+          "display_value": "偶发室性早搏记录（低置信度，待医生核验）",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "偶发室性早搏",
+          "confidence": 0.78,
+          "ocr_confidence": 0.78,
+          "extraction_confidence": 0.76,
+          "verification_status": "needs_review",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20240921-holter"],
+          "bbox": [52, 226, 540, 264],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     "mat-card-20241002-discharge": {
       "material_id": "mat-card-20241002-discharge",
-      "title": "合成出院小结",
+      "title": "合成出院小结｜上级医院评估线索",
       "image_url": "/assets/cardiac-001/2024-10-02-discharge.svg",
-      "ocr_text": "合成演示材料｜原文描述：冠心病可能。建议：上级医院进一步评估。",
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜住院部｜2024-10-02｜出院原文描述：冠心病可能。建议：上级医院进一步评估。出院带药记录：阿司匹林肠溶片、阿托伐他汀钙片。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20241002-diagnosis", "text": "出院原文描述：冠心病可能。", "bbox": [52, 142, 540, 178], "confidence": 0.93},
+        {"block_id": "ocr-card-20241002-referral", "text": "建议：上级医院进一步评估。", "bbox": [52, 194, 550, 232], "confidence": 0.95},
+        {"block_id": "ocr-card-20241002-medication", "text": "出院带药记录：阿司匹林肠溶片、阿托伐他汀钙片。", "bbox": [52, 246, 550, 284], "confidence": 0.9}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-discharge",
+          "anchor_id": "ev-card-20241002-diagnosis-text",
           "material_id": "mat-card-20241002-discharge",
-          "field_key": "原文描述",
-          "display_value": "冠心病可能（外院原文，待核验）",
-          "page_or_image": "第 1 张，诊断栏",
+          "field_key": "出院原文描述",
+          "display_value": "冠心病可能（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，出院诊断栏",
           "locator_text": "冠心病可能",
           "confidence": 0.93,
+          "ocr_confidence": 0.93,
+          "extraction_confidence": 0.91,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20241002-diagnosis"],
+          "bbox": [52, 142, 540, 178],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20241002-referral",
+          "material_id": "mat-card-20241002-discharge",
+          "field_key": "出院建议记录",
+          "display_value": "建议上级医院进一步评估（外院原文）",
+          "page_or_image": "第 1 张，出院医嘱栏",
+          "locator_text": "上级医院进一步评估",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "extraction_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20241002-referral"],
+          "bbox": [52, 194, 550, 232],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20241002-medication",
+          "material_id": "mat-card-20241002-discharge",
+          "field_key": "出院带药记录",
+          "display_value": "阿司匹林肠溶片、阿托伐他汀钙片（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，带药栏",
+          "locator_text": "阿司匹林肠溶片、阿托伐他汀钙片",
+          "confidence": 0.9,
+          "ocr_confidence": 0.9,
+          "extraction_confidence": 0.88,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20241002-medication"],
+          "bbox": [52, 246, 550, 284],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     "mat-card-20250115-lab": {
       "material_id": "mat-card-20250115-lab",
-      "title": "合成化验单",
+      "title": "合成化验单｜肌钙蛋白 I 关键指标",
       "image_url": "/assets/cardiac-001/2025-01-15-lab.svg",
-      "ocr_text": "合成演示材料｜肌钙蛋白 I：0.19 ng/mL ↑；参考范围：0.00–0.04 ng/mL。建议：转上级医院进一步评估。",
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜检验科｜2025-01-15｜检测项目：肌钙蛋白 I。结果：0.19 ng/mL ↑。参考范围：0.00 - 0.04 ng/mL。标记升高，待医生核验。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20250115-tni", "text": "肌钙蛋白 I：0.19 ng/mL ↑", "bbox": [42, 149, 552, 183], "confidence": 0.91},
+        {"block_id": "ocr-card-20250115-reference", "text": "参考范围：0.00 - 0.04 ng/mL", "bbox": [52, 206, 520, 232], "confidence": 0.94},
+        {"block_id": "ocr-card-20250115-flag", "text": "标记升高，待医生核验", "bbox": [52, 250, 520, 276], "confidence": 0.95}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-tni",
+          "anchor_id": "ev-card-20250115-tni",
           "material_id": "mat-card-20250115-lab",
           "field_key": "关键指标",
-          "display_value": "肌钙蛋白 I：0.19 ng/mL（标记升高，待核验）",
+          "display_value": "肌钙蛋白 I：0.19 ng/mL（标记升高，待医生核验）",
           "page_or_image": "第 1 张，第 3 行",
-          "locator_text": "肌钙蛋白 I",
+          "locator_text": "肌钙蛋白 I：0.19 ng/mL ↑",
           "confidence": 0.91,
+          "ocr_confidence": 0.91,
+          "extraction_confidence": 0.9,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": true
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20250115-tni"],
+          "bbox": [42, 149, 552, 183],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     },
     "mat-card-20250115-note": {
       "material_id": "mat-card-20250115-note",
-      "title": "合成门诊记录",
+      "title": "合成门诊记录｜转院前复诊",
       "image_url": "/assets/cardiac-001/2025-01-15-note.svg",
-      "ocr_text": "合成演示材料｜复诊记录：转上级医院进一步评估。",
-      "evidence_anchors": []
+      "ocr_text": "合成演示材料｜青禾县中心医院（虚构）｜心内科门诊｜2025-01-15｜胸前区不适再次发作，伴心悸。心电图描述：ST-T 改变较前复查仍见。处理记录：建议转上级医院进一步评估。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20250115-note-symptom", "text": "胸前区不适再次发作，伴心悸。", "bbox": [52, 132, 552, 168], "confidence": 0.94},
+        {"block_id": "ocr-card-20250115-note-stt", "text": "心电图描述：ST-T 改变较前复查仍见。", "bbox": [52, 180, 552, 216], "confidence": 0.87},
+        {"block_id": "ocr-card-20250115-note-transfer", "text": "处理记录：建议转上级医院进一步评估。", "bbox": [52, 228, 552, 264], "confidence": 0.96}
+      ],
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-card-20250115-symptom",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "症状记录",
+          "display_value": "胸前区不适再次发作，伴心悸（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "胸前区不适再次发作，伴心悸",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "extraction_confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250115-note-symptom"],
+          "bbox": [52, 132, 552, 168],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250115-stt",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "心电图描述",
+          "display_value": "ST-T 改变较前复查仍见（外院原文，待医生核验）",
+          "page_or_image": "第 1 张，第 5 行",
+          "locator_text": "ST-T 改变较前复查仍见",
+          "confidence": 0.87,
+          "ocr_confidence": 0.87,
+          "extraction_confidence": 0.85,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true,
+          "ocr_block_ids": ["ocr-card-20250115-note-stt"],
+          "bbox": [52, 180, 552, 216],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250115-transfer-plan",
+          "material_id": "mat-card-20250115-note",
+          "field_key": "处理记录",
+          "display_value": "建议转上级医院进一步评估（外院原文）",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "转上级医院进一步评估",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250115-note-transfer"],
+          "bbox": [52, 228, 552, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
     },
     "mat-card-20250116-transfer": {
       "material_id": "mat-card-20250116-transfer",
-      "title": "合成转入接收记录",
+      "title": "合成转入接收记录｜接诊前摘要与缺失材料",
       "image_url": "/assets/cardiac-001/2025-01-16-transfer.svg",
-      "ocr_text": "合成演示材料｜接收记录：外院材料已整理。材料提示：未见冠脉 CTA 或造影相关材料。",
+      "ocr_text": "合成演示材料｜澄明医学中心｜心内科｜2025-01-16｜接收状态：外院材料已整理，生成接诊前时间轴。材料提示：未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充。系统边界：仅整理材料和证据，不生成诊断或治疗意见。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-card-20250116-status", "text": "接收状态：外院材料已整理，生成接诊前时间轴。", "bbox": [52, 132, 552, 168], "confidence": 0.97},
+        {"block_id": "ocr-card-20250116-missing", "text": "材料提示：未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充。", "bbox": [52, 184, 552, 226], "confidence": 0.96},
+        {"block_id": "ocr-card-20250116-boundary", "text": "系统边界：仅整理材料和证据，不生成诊断或治疗意见。", "bbox": [52, 238, 552, 276], "confidence": 0.98}
+      ],
       "evidence_anchors": [
         {
-          "anchor_id": "ev-card-missing",
+          "anchor_id": "ev-card-20250116-status",
+          "material_id": "mat-card-20250116-transfer",
+          "field_key": "接收状态",
+          "display_value": "外院材料已整理，生成接诊前时间轴",
+          "page_or_image": "第 1 张，接收记录栏",
+          "locator_text": "外院材料已整理",
+          "confidence": 0.97,
+          "ocr_confidence": 0.97,
+          "extraction_confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-status"],
+          "bbox": [52, 132, 552, 168],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250116-missing",
           "material_id": "mat-card-20250116-transfer",
           "field_key": "材料提示",
-          "display_value": "未见冠脉 CTA 或造影相关材料",
+          "display_value": "未见冠脉 CTA 或造影相关材料；请人工核对是否需要补充",
           "page_or_image": "第 1 张，材料清单栏",
-          "locator_text": "材料提示",
+          "locator_text": "未见冠脉 CTA 或造影相关材料",
           "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "extraction_confidence": 0.95,
           "verification_status": "unreviewed",
-          "is_abnormal_flag": false
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-missing"],
+          "bbox": [52, 184, 552, 226],
+          "source_mode": "deterministic_synthetic"
+        },
+        {
+          "anchor_id": "ev-card-20250116-boundary",
+          "material_id": "mat-card-20250116-transfer",
+          "field_key": "系统边界",
+          "display_value": "仅整理材料和证据，不生成诊断或治疗意见",
+          "page_or_image": "第 1 张，安全提示栏",
+          "locator_text": "不生成诊断或治疗意见",
+          "confidence": 0.98,
+          "ocr_confidence": 0.98,
+          "extraction_confidence": 0.98,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-card-20250116-boundary"],
+          "bbox": [52, 238, 552, 276],
+          "source_mode": "deterministic_synthetic"
         }
       ]
     }
@@ -397,13 +893,16 @@
     "document_types": [
       "急诊病历 + 心电图报告",
       "门诊病历 + 化验单",
-      "入院记录 + 检查报告",
+      "入院记录 + 心超 + 动态心电图报告",
       "出院小结",
+      "门诊病历 + 化验单 + 心电图报告",
       "转入接收记录"
     ],
     "transfer_related": true
   },
   "missing_material_reminders": [
-    "当前合成材料集中未见冠脉 CTA 或造影相关报告；该提示仅用于材料整理演示。"
+    "当前合成材料集中未见冠脉 CTA 或冠脉造影相关报告；该提示仅用于材料完整性整理演示。",
+    "当前合成材料集中未见完整长期用药核对单；如演示医生核验流程，可点击出院带药记录查看原文定位。",
+    "动态心电图摘要存在低置信度字段，系统已标记为需复核，避免把 OCR 结果直接当成临床结论。"
   ]
 }

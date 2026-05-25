@@ -67,7 +67,7 @@ export function App() {
   const selectedFileNames = ["合成转院材料-1.pdf", "合成检验截图-2.jpg"];
   const [ingestionJob, setIngestionJob] = useState<IngestionJob | null>(null);
   const [captureMessage, setCaptureMessage] = useState("");
-  const [searchQuestion, setSearchQuestion] = useState("病人最近的材料中是否提到食欲不振？");
+  const [searchQuestion, setSearchQuestion] = useState("这个患者最早什么时候出现胸部不适？");
   const [searchResult, setSearchResult] = useState<EvidenceSearchResponse | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
