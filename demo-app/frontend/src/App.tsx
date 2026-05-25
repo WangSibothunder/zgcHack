@@ -468,6 +468,7 @@ function TimelineWorkspace({
     <main className="workspace">
       <section className="main-pane" aria-label="时间轴工作区">
         {timeline && <CaseOverview timeline={timeline} />}
+        {timeline && <KeyClinicalCues timeline={timeline} onOpenEvidence={onOpenEvidence} />}
         {timeline && (
           <EvidenceSearchPanel
             question={searchQuestion}
@@ -541,6 +542,72 @@ function CaseOverview({ timeline }: { timeline: TimelineResponse }) {
       </div>
     </section>
   );
+}
+
+function KeyClinicalCues({
+  timeline,
+  onOpenEvidence,
+}: {
+  timeline: TimelineResponse;
+  onOpenEvidence: (materialId: string, anchor?: EvidenceAnchor) => Promise<void>;
+}) {
+  const cues = collectKeyCues(timeline).slice(0, 4);
+  if (!cues.length) return null;
+  return (
+    <section className="key-cues" aria-label="重点核验线索">
+      <div className="section-title-row">
+        <div>
+          <h3>重点核验线索</h3>
+          <p>按转院原因相关性和异常标记聚合，供医生快速定位原文。</p>
+        </div>
+        <span>{cues.length} 项</span>
+      </div>
+      <div className="cue-grid">
+        {cues.map(({ node, anchor }) => (
+          <button className="cue-card" type="button" key={anchor.anchor_id} onClick={() => void onOpenEvidence(anchor.material_id, anchor)}>
+            <span>{node.date}｜{anchor.field_key}</span>
+            <strong>{anchor.display_value}</strong>
+            <em>{explainCue(anchor, node)}</em>
+            <small>{node.related_to_transfer_reason ? "与转院原因相关" : "材料字段待核验"}｜查看原图证据</small>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function collectKeyCues(timeline: TimelineResponse) {
+  return timeline.timeline_nodes
+    .flatMap((node) =>
+      node.evidence_anchors
+        .filter((anchor) => anchor.is_abnormal_flag || node.related_to_transfer_reason)
+        .map((anchor) => ({ node, anchor })),
+    )
+    .sort((left, right) => {
+      const leftScore = (left.anchor.is_abnormal_flag ? 2 : 0) + (left.node.related_to_transfer_reason ? 1 : 0);
+      const rightScore = (right.anchor.is_abnormal_flag ? 2 : 0) + (right.node.related_to_transfer_reason ? 1 : 0);
+      return rightScore - leftScore || right.node.date.localeCompare(left.node.date);
+    });
+}
+
+function explainCue(anchor: EvidenceAnchor, node: TimelineNode) {
+  const text = `${anchor.field_key} ${anchor.display_value} ${anchor.locator_text}`.toLowerCase();
+  if (text.includes("肌钙蛋白") || text.includes("ctni") || text.includes("tni")) {
+    return "心肌损伤相关指标被原材料标记，需结合时间、参考范围和原图核验。";
+  }
+  if (text.includes("ck-mb")) {
+    return "心肌酶相关字段出现标记，适合作为接诊前优先核验项。";
+  }
+  if (text.includes("st-t")) {
+    return "心电图描述出现异常样式文字，需回看原始心电图/报告。";
+  }
+  if (text.includes("冠心病")) {
+    return "外院原文包含倾向性描述，只作为既往材料线索，不作为本系统判断。";
+  }
+  if (node.related_to_transfer_reason) {
+    return "该字段所在节点与转院原因相关，建议优先核对来源材料。";
+  }
+  return "该字段被标记为待核验，需查看原文位置确认。";
 }
 
 function providerModeLabel(mode?: string) {
@@ -882,6 +949,20 @@ function DetailPanel({
         ))}
         {evidenceLoading && <span className="loading-inline">正在打开证据材料...</span>}
       </section>
+
+      {primaryAnchor && (
+        <section className="priority-box">
+          <div className="section-title-row">
+            <h3>本节点重点</h3>
+            <span>{node.related_to_transfer_reason ? "转院相关" : "材料整理"}</span>
+          </div>
+          <strong>{primaryAnchor.display_value}</strong>
+          <p>{explainCue(primaryAnchor, node)}</p>
+          <button className="retry-link" type="button" onClick={() => void onOpenEvidence(primaryAnchor.material_id, primaryAnchor)}>
+            查看原图证据
+          </button>
+        </section>
+      )}
 
       {primaryAnchor && (
         <section className="source-record-box">
