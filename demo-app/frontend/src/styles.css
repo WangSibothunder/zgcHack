@@ -369,6 +369,23 @@ select {
   font-weight: 760;
 }
 
+.capture-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+}
+
+.capture-result div {
+  display: grid;
+  gap: 3px;
+}
+
+.capture-result span {
+  color: #166534;
+}
+
 .processing-panel {
   margin-top: 18px;
 }
@@ -1523,8 +1540,13 @@ label:focus-within {
   .filter,
   .retry-link,
   .document-select,
-  .search-row .icon-button {
+  .search-row .icon-button,
+  .capture-result .icon-button {
     width: 100%;
+  }
+
+  .capture-result {
+    display: grid;
   }
 
   .document-select {

@@ -99,7 +99,7 @@ export function App() {
     }
   }
 
-  async function loadTimeline(caseId: string, keepFilter = false) {
+  async function loadTimeline(caseId: string, keepFilter = false, preferredNodeId = "") {
     setIsLoading(true);
     setError("");
     try {
@@ -108,7 +108,11 @@ export function App() {
       setSelectedCaseId(caseId);
       setNotice(payload.notice);
       if (!keepFilter) setFilter({ kind: "all" });
-      setActiveNodeId(payload.timeline_nodes[0]?.node_id ?? "");
+      setActiveNodeId(
+        preferredNodeId && payload.timeline_nodes.some((node) => node.node_id === preferredNodeId)
+          ? preferredNodeId
+          : payload.timeline_nodes[0]?.node_id ?? "",
+      );
       await refreshSummary(caseId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "无法加载时间轴。");
@@ -253,10 +257,13 @@ export function App() {
     try {
       const job = await createIngestionJob(files, selectedCaseId, source);
       setIngestionJob(job);
-      setCaptureMessage(job.message);
       if (job.status === "timeline_generated") {
-        await loadTimeline(job.generated_case_id, true);
+        const preferredNodeId = job.generated_node_ids.at(-1) ?? "";
+        await loadTimeline(job.generated_case_id, true, preferredNodeId);
+        setCaptureMessage(`已追加 ${job.materials.length} 份合成材料到当前病例时间轴。`);
         setActiveTab("timeline");
+      } else {
+        setCaptureMessage(job.message);
       }
     } catch (err) {
       setCaptureMessage(err instanceof Error ? err.message : "合成材料处理失败。");
@@ -339,14 +346,15 @@ export function App() {
       </nav>
 
       {activeTab === "capture" ? (
-        <CaptureWorkbench
-          cases={cases}
-          selectedCaseId={selectedCaseId}
-          onCaseChange={(caseId) => void loadTimeline(caseId)}
-          job={ingestionJob}
-          message={captureMessage}
-          onProcess={handleIngestion}
-        />
+          <CaptureWorkbench
+            cases={cases}
+            selectedCaseId={selectedCaseId}
+            onCaseChange={(caseId) => void loadTimeline(caseId)}
+            job={ingestionJob}
+            message={captureMessage}
+            onProcess={handleIngestion}
+            onViewTimeline={() => setActiveTab("timeline")}
+          />
       ) : activeTab === "summary" ? (
         <PreConsultSummary summary={summary} onRefresh={() => void refreshSummary()} />
       ) : (
@@ -982,6 +990,7 @@ function CaptureWorkbench({
   job,
   message,
   onProcess,
+  onViewTimeline,
 }: {
   cases: CaseSummary[];
   selectedCaseId: string;
@@ -989,6 +998,7 @@ function CaptureWorkbench({
   job: IngestionJob | null;
   message: string;
   onProcess: (files: File[], source: "upload" | "camera") => Promise<void>;
+  onViewTimeline: () => void;
 }) {
   const [files, setFiles] = useState<File[]>([]);
   const [cameraError, setCameraError] = useState("");
@@ -1093,12 +1103,13 @@ function CaptureWorkbench({
         </div>
       </section>
 
-      <ProcessingStatus job={job} message={message} />
+      <ProcessingStatus job={job} message={message} onViewTimeline={onViewTimeline} />
     </main>
   );
 }
 
-function ProcessingStatus({ job, message }: { job: IngestionJob | null; message: string }) {
+function ProcessingStatus({ job, message, onViewTimeline }: { job: IngestionJob | null; message: string; onViewTimeline: () => void }) {
+  const generatedCount = job?.materials.filter((material) => material.status !== "retake_required").length ?? 0;
   return (
     <section className="processing-panel" aria-label="处理状态">
       <div className="panel-heading">
@@ -1107,6 +1118,19 @@ function ProcessingStatus({ job, message }: { job: IngestionJob | null; message:
       </div>
       {job && (
         <>
+          {job.status === "timeline_generated" && (
+            <div className="inline-success capture-result">
+              <div>
+                <strong>已写入当前病例</strong>
+                <span>
+                  新增 {generatedCount} 份材料，生成 {job.generated_node_ids.length} 个时间轴节点。
+                </span>
+              </div>
+              <button className="icon-button primary" type="button" onClick={onViewTimeline}>
+                查看新增时间轴
+              </button>
+            </div>
+          )}
           <div className="stepper">
             {job.steps.map((step) => (
               <div className={`step ${step.status}`} key={step.name}>
