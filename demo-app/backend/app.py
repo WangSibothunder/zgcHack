@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -23,6 +24,8 @@ PACK_ROOT = APP_DIR.parent.parent
 DATA_DIR = PACK_ROOT / "demo-data"
 CASES_DIR = DATA_DIR / "cases"
 ASSETS_DIR = DATA_DIR / "assets"
+FRONTEND_DIST_DIR = PACK_ROOT / "demo-app" / "frontend" / "dist"
+FRONTEND_ASSETS_DIR = FRONTEND_DIST_DIR / "frontend-assets"
 
 NOTICE = "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。"
 ALLOWED_VERIFICATION_STATUSES = {"unreviewed", "confirmed", "needs_review"}
@@ -175,6 +178,21 @@ app.add_middleware(
 )
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 app.mount("/runtime-assets", StaticFiles(directory=RUNTIME_DIR), name="runtime-assets")
+if FRONTEND_ASSETS_DIR.exists():
+    app.mount("/frontend-assets", StaticFiles(directory=FRONTEND_ASSETS_DIR), name="frontend-assets")
+
+
+@app.get("/", response_model=None)
+def frontend_index():
+    index_path = FRONTEND_DIST_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {
+        "service": "转诊迹 Synthetic Demo API",
+        "health": "/health",
+        "cases": "/api/v1/demo/cases",
+        "docs": "/docs",
+    }
 
 
 @app.get("/health")
