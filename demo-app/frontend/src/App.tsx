@@ -470,6 +470,7 @@ function TimelineWorkspace({
             onSearch={onSearchQuestion}
           />
         )}
+        {searchResult && <EvidenceSearchResults result={searchResult} onOpenResult={onOpenSearchResult} />}
         <FilterBar timeline={timeline} filter={filter} onFilter={onFilter} onRetry={onRetry} />
         {uploadMessage && <div className="inline-success">{uploadMessage}</div>}
 
@@ -484,7 +485,6 @@ function TimelineWorkspace({
               onSelect={onSelect}
               onOpenEvidence={onOpenEvidence}
             />
-            {searchResult && <EvidenceSearchResults result={searchResult} onOpenResult={onOpenSearchResult} />}
           </>
         )}
       </section>
