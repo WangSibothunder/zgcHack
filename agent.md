@@ -74,7 +74,12 @@ Keep front and back end separate:
 - Frontend must not contain the full timeline fixture as application state except fallback test mocks.
 - Backend owns case, timeline, material, OCR and evidence payloads.
 - Static synthetic material assets may be served by the backend or a clearly configured static asset base URL.
-- All API paths should be versioned below `/api/v1/demo/`.
+- Keep existing `/api/v1/demo/` fixture browsing endpoints backward-compatible.
+- Use `/api/v2/demo/` for real-byte synthetic ingestion, camera capture, processing jobs,
+  evidence review and summary features introduced in v0.8.
+- Use `/api/v3/demo/` for evidence-linked search, provider status and vivo API smoke-test
+  features introduced in v0.9/v0.9.1.
+- Do not silently break an existing response shape; update docs, frontend adapters and tests together.
 
 ## 5. Required API behaviors
 
@@ -93,8 +98,13 @@ Essential endpoints:
 
 - Use labels such as `合成演示数据` and `仅用于材料整理演示，不构成诊断或治疗建议`.
 - Use `异常字段待核验` rather than implying a confirmed medical judgment.
-- Evidence must identify material, page/image, field/line or bounding-box placeholder, and OCR confidence.
-- Low-confidence extraction must be visually marked.
+- Evidence must identify material, page/image, field/line or bounding-box placeholder, and locator/bbox information.
+- For fixture/sidecar data, clearly labelled preset demo confidence may be shown.
+- For live vivo OCR, the provided official contract returns text/location but does not specify
+  an OCR confidence field; store and display `confidence=null` with an honest notice instead of
+  inventing a numeric confidence.
+- Low-confidence extraction must be visually marked; "low" means available confidence < threshold,
+  not the absence of a confidence field.
 - Missing-material output must be phrased as an organizational reminder, never as clinical necessity.
 - Never upload or commit secrets, account tokens, real documents, `.env` values, or local cache data.
 

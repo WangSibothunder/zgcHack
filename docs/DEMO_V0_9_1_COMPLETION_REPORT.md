@@ -1,99 +1,79 @@
-# 转诊迹 v0.9.1 完成报告：Provider 目录重构 + vivo API 适配
+# 转诊迹 v0.9.1-Resolved 完成报告
 
-> 完成日期：2026-05-25  
-> 仓库：`WangSibothunder/zgcHack`（公开）
+> 完成日期：2026-05-25
+> 执行依据：`docs/PRD_V0_9_1_VIVO_API_RESOLVED_PATCH.md`
 
-## 1. 变更摘要
+## 一、版本概要
 
-根据 `PRD_V0_9_EVIDENCE_LINKED_SEARCH.md`（第 8、14 节）与 `PRD_V0_9_1_VIVO_API_INTEGRATION.md`：
+本版本在 v0.8（合成上传/OCR/证据核验）和 v0.9（证据联查）基础上，完成了以下关键修订：
 
-### 已完成
+1. **vivo API 接口字段按已核实文档补齐**：将此前"等待官方页面核实"的 placeholder 替换为已确认字段
+2. **OCR provider 重构**：从 HMAC-SHA256 签名改为 Bearer 鉴权，与已核实 PRD 保持一致
+3. **LLM provider 重构**：mode 从 `vivo_bluelm` 改为 `vivo_chat_completions`，使用 OpenAI-compatible 协议
+4. **验证层修复**：`validate_evidence` 中 `confidence=None` 允许通过（vivo 官方不提供该字段）
+5. **鉴权统一**：移除旧版 `build_vivo_sign_headers`，统一使用 `build_vivo_bearer_headers` 和 `build_vivo_ocr_headers`
+6. **文档同步**：更新 `.env.example`、`.gitignore`、`docs/VIVO_API_VERIFICATION.md`
 
-- ✅ **Provider 目录重构**：从 `services/external_ai.py` 中提取 Provider 协议，迁移到独立 `providers/` 包
-- ✅ **基础数据模型**：`OCRBlock`、`OCRResult`、`LLMGroundedItem`、`LLMGroundedResult`
-- ✅ **vivo 鉴权模块**：`providers/vivo_auth.py`——HMAC-SHA256 签名 + header 脱敏
-- ✅ **vivo OCR adapter**：`providers/vivo_general_ocr.py`——polygon → bbox 转换
-- ✅ **vivo BlueLM adapter**：`providers/vivo_bluelm_evidence.py`——grounded rerank + segment_id 校验
-- ✅ **合成 OCR provider**：`providers/synthetic_ocr.py`——从 sidecar 读取的 fallback
-- ✅ **本地证据 LLM provider**：`providers/local_evidence_llm.py`——关键词匹配 mock
-- ✅ **Provider 注册中心**：`providers/provider_registry.py`——按环境变量返回正确实例
-- ✅ **vivo BlueLM 系统提示词**：`prompts/vivo_evidence_linked_search_system.txt`
-- ✅ **环境变量更新**：`.env.example` 新增 vivo 配置占位符
-- ✅ **新增 API 端点**：
-  - `GET /api/v3/demo/providers/status`
-  - `POST /api/v3/demo/providers/vivo/smoke-test`
-- ✅ **测试覆盖**：`tests/test_vivo_providers.py`（18 个测试）+ 4 个 vivo 测试 fixture JSON
-- ✅ **验证文档**：`docs/VIVO_API_VERIFICATION.md`
-- ✅ **API 合同文档**：`docs/API_CONTRACT_V3.md`
+## 二、vivo OCR 接入结果
 
-### 未变更
+| 项目 | 结论 |
+| --- | --- |
+| adapter 是否完成 | ✅ `VivoGeneralOCRProvider` 已实现，含 pos=2 坐标解析 |
+| 是否用真实凭证对合成样例调用 | ❌ 未运行（本地无可用的 API 凭证） |
+| 使用的 endpoint scheme | 默认 HTTP (`VIVO_OCR_BASE_URL=http://api-ai.vivo.com.cn`) |
+| pos 参数 | 2 |
+| 是否返回可渲染位置 | ✅ pos=2 模式支持四点坐标 → polygon/bbox 转换 |
+| 是否提供置信度 | ❌ 官方文档未发现；live OCR 的 `confidence=null` |
+| fallback 是否可运行 | ✅ 透明降级到 `SyntheticOCRProvider`（sidecar / 硬编码 fallback） |
 
-- 证据联查业务层（`services/evidence_search.py`）不改动
-- 前端层不改动（provider 状态标识未来版本添加）
-- 所有现有测试仍然通过
-- `external_ai.py` 保留向后兼容
+## 三、vivo LLM 接入结果
 
-## 2. 重要设计决策
+| 项目 | 结论 |
+| --- | --- |
+| adapter 是否完成 | ✅ `VivoBlueLMEvidenceProvider` 已实现，OpenAI-compatible |
+| 是否用真实凭证对合成候选片段调用 | ❌ 未运行（本地无可用的 API 凭证） |
+| 实际成功模型 | 未运行，默认配置 `qwen3.5-plus`，可通过 env 切换 |
+| request id query 字段实际成功值 | 未运行；默认 `request_id`，兼容重试 `requestId` |
+| 是否成功解析 grounded JSON | 仅单元测试验证，未真实 API 调用 |
+| API 不可用时本地检索是否可运行 | ✅ `LocalEvidenceLLMProvider` 始终可用 |
 
-| 决策 | 理由 |
-|------|------|
-| host/path/model 从 `.env` 读取 | 允许跟随官方文档调整，不写死 |
-| BlueLM adapter 兼容 OpenAI-compatible 响应 | 多数 LLM API 遵循此模式 |
-| vivo auth 使用 `X-APP-ID`、`X-Signature`、`X-TIMESTAMP` | 基于 vivo AIGC 创新赛已知鉴权模式 |
-| polygon 自动转换 bbox | 统一高亮坐标系 |
-| segment_id 校验 | 防止 LLM 编造来源 |
-| 未配置时返回空列表/错误信息而非异常 | 不阻塞正常演示流程 |
+## 四、数据安全检查
 
-## 3. 外部 API 接入状态
+| 项目 | 结论 |
+| --- | --- |
+| 外部调用材料是否全部 synthetic | ✅ provider 始终断言 `synthetic=true` |
+| 是否存在真实病历 | ✅ 无：所有 fixture 为虚构合成数据 |
+| `.env` 是否未追踪 | ✅ `.gitignore` 覆盖 `.env`、`.env.*` 排除 `.env.example` |
+| AppKey 是否未进入前端 bundle / logs / git | ✅ 仅后端读取，`redact_sensitive_headers` 脱敏日志 |
+| runtime/raw response 是否未追踪 | ✅ `.gitignore` 新增 `*vivo_api_raw_*`、`*external_api_debug*` |
 
-### 3.1 OCR API
+## 五、关键修复清单
 
-**当前 provider：** `deterministic_synthetic`（预置合成 OCR 回放）
+| 问题 | 修复 |
+| --- | --- |
+| v0.8 `validate_evidence` 拒绝 `confidence=None` | ✅ 改为仅在有值时校验 0~1 范围 |
+| `vivo_auth.py` 使用 HMAC-SHA256 签名 | ✅ 改为 Bearer 鉴权 |
+| LLM provider mode 写为 `vivo_bluelm` | ✅ 改为 `vivo_chat_completions` |
+| `app.py` smoke-test 导入旧函数 | ✅ 更新为 `build_vivo_bearer_headers` |
+| 缺少 raw response 忽略规则 | ✅ 加入 `.gitignore` |
+| `.env.example` 与已核实 PRD 字段不匹配 | ✅ 完全重写为 v0.9.1-Resolved 版 |
 
-真实 vivo OCR API 接入**待用户提供有效 APP_ID/APP_KEY** 后验证。
+## 六、测试结果
 
-一旦验证通过，设置：
-```
-EXTERNAL_AI_ENABLED=true
-OCR_PROVIDER=vivo_general_ocr
-```
+- **后端 pytest**: 35/35 passed
+- **测试覆盖**: auth → OCR → LLM → provider status → validate_llm_items → smoke-test
+- **前端测试**: 未修改，需要单独执行 `npm test`
 
-然后在 `VIVO_API_VERIFICATION.md` 中填写结果。
+## 七、遗留问题
 
-### 3.2 LLM API
+1. **真实 API smoke test 未运行**：需要本地填写 `.env` 中的 `VIVO_APP_ID` 和 `VIVO_APP_KEY`
+2. **OCR HTTPS 可用性未验证**：默认 HTTP；手动设 `VIVO_OCR_BASE_URL=https://...` 后需测试
+3. **request id 参数兼容**：代码支持 `request_id` ↔ `requestId` 兼容重试，但未验证实际 API 行为
+4. **坐标尺度确认**：`pos=2` 返回相对坐标，但未验证实际基准值（[0,1] 或百分比或固定基准）
 
-**当前 provider：** `mock`（本地证据检索）
+## 八、公开仓库状态
 
-真实 vivo BlueLM API 接入同样**待用户提供有效 APP_ID/APP_KEY** 后验证。
-
-一旦验证通过，设置：
-```
-EXTERNAL_AI_ENABLED=true  
-LLM_PROVIDER=vivo_bluelm
-```
-
-## 4. 测试结果
-
-```
-tests/test_api.py          — 13 个测试全部通过
-tests/test_vivo_providers.py — 18 个测试全部通过
-```
-
-## 5. 公开仓库安全检查
-
-- [x] `.env.example` 只包含占位符
-- [x] `.env` 已被 `.gitignore`
-- [x] `.env.*` 已被 `.gitignore`（除 `.env.example`）
-- [x] `runtime/` 已被 `.gitignore`
-- [x] `*.db`、`*.sqlite`、`*.sqlite3` 已被 `.gitignore`
-- [x] 无真实患者数据
-- [x] 仓库保持 public
-- [x] 无 API key 硬编码
-
-## 6. 后续使用指引
-
-1. 从 vivo AIGC 创新赛平台申请 APP_ID/APP_KEY
-2. 复制 `.env.example` 为 `.env` 并填写
-3. 参考 `docs/VIVO_API_VERIFICATION.md` 验证 API
-4. 如果 API host/path/model 与实际分配的不同，修改 `.env` 对应字段
-5. 如果 JSON 响应结构与 adapter 预期不同，修改对应 provider 的解析方法
+- 仓库：`WangSibothunder/zgcHack` (public)
+- 当前分支：`main`
+- 与上游一致性：origin/main 一致
+- 本地 v0.9.1 修订：尚未 commit/push

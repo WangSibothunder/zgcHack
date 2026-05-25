@@ -45,7 +45,7 @@ def get_llm_provider_info() -> tuple[str, str]:
 
     provider_name = os.getenv("LLM_PROVIDER", "mock").lower()
     if provider_name in ("vivo_bluelm", "vivo", "bluelm"):
-        return "vivo_bluelm", "vivo BlueLM 证据排序"
+        return "vivo_chat_completions", "vivo Chat Completions 证据排序"
     return "mock", "本地证据检索"
 
 

@@ -1,43 +1,53 @@
 from __future__ import annotations
 
 import base64
-import json
 import os
-import time
+import uuid
 from typing import Any
 
 import httpx
 
 from services.external_ai import assert_synthetic_external_api_allowed
 from .base import OCRBlock, OCRResult
-from .vivo_auth import build_vivo_sign_headers, redact_sensitive_headers
+from .vivo_auth import build_vivo_ocr_headers, redact_sensitive_headers
 
-VIVO_OCR_HOST = "api-ai.vivo.com.cn"
-VIVO_OCR_PATH = "/ocr/general_recognition"
-DEFAULT_TIMEOUT = 30
+VIVO_OCR_DEFAULT_BASE_URL = "http://api-ai.vivo.com.cn"
+VIVO_OCR_DEFAULT_PATH = "/ocr/general_recognition"
+DEFAULT_TIMEOUT = 10
 
 
 class VivoGeneralOCRProvider:
     """vivo 通用 OCR provider。
 
-    连接 vivo AI 平台通用 OCR API，将返回结果映射为统一 OCRResult。
+    根据已核实 PRD v0.9.1-Resolved 文档接入 vivo AI 平台通用 OCR API。
 
-    注意事项：
-    - 仅允许处理 synthetic=true 的数据。
-    - 若 API 未返回文字坐标，supports_bounding_boxes=False，
-      此时不得伪造高亮框。
-    - 若获取到 polygon 坐标，会转换为 [x_min, y_min, x_max, y_max] bbox。
+    请求特征：
+    - Content-Type: application/x-www-form-urlencoded
+    - Authorization: Bearer AppKey
+    - Query: requestId=<uuid>
+    - Form body: image (base64), pos=2, businessid, sessid
+
+    位置返回：pos=2 返回相对坐标 (top_left/top_right/down_left/down_right)，
+    转换为 polygon 与 bbox。
+    置信度：官方文档未提供该字段，live OCR 结果 confidence=null。
+
+    重要安全限制：
+    - 官方文档给出 HTTP endpoint，优先测试 HTTPS 可用性
+    - 仅允许处理 synthetic=true 的数据
     """
 
     mode = "vivo_general_ocr"
     label = "vivo 通用 OCR"
 
     def __init__(self) -> None:
-        self._host = os.getenv("VIVO_OCR_HOST", VIVO_OCR_HOST)
-        self._path = os.getenv("VIVO_OCR_PATH", VIVO_OCR_PATH)
+        base_url = os.getenv("VIVO_OCR_BASE_URL", VIVO_OCR_DEFAULT_BASE_URL)
+        path = os.getenv("VIVO_OCR_PATH", VIVO_OCR_DEFAULT_PATH)
+        self._url = f"{base_url.rstrip('/')}{path}"
         self._timeout = int(os.getenv("VIVO_OCR_TIMEOUT_SECONDS", str(DEFAULT_TIMEOUT)))
-        self._business_id = os.getenv("VIVO_OCR_BUSINESS_ID", "")
-        self._position_mode = os.getenv("VIVO_OCR_POSITION_MODE", "")
+        self._position_mode = os.getenv("VIVO_OCR_POS", "2")
+        self._business_id_override = os.getenv("VIVO_OCR_BUSINESS_ID_OVERRIDE", "")
+        self._app_id = os.getenv("VIVO_APP_ID", "")
+        self._app_key = os.getenv("VIVO_APP_KEY", "")
 
     def recognize(self, image_path: str | None = None, image_bytes: bytes | None = None) -> OCRResult:
         assert_synthetic_external_api_allowed({"synthetic": True})
@@ -58,27 +68,33 @@ class VivoGeneralOCRProvider:
             )
 
         image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        request_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4())
 
-        body_dict: dict[str, Any] = {
+        business_id = (
+            self._business_id_override
+            or f"aigc{self._app_id}"
+        )
+
+        headers = build_vivo_ocr_headers()
+        params = {"requestId": request_id}
+        data = {
             "image": image_base64,
-            "businessId": self._business_id or "",
+            "pos": self._position_mode,
+            "businessid": business_id,
+            "sessid": session_id,
         }
-        if self._position_mode:
-            body_dict["pos"] = self._position_mode
-
-        body_str = json.dumps(body_dict, ensure_ascii=False)
-        headers = build_vivo_sign_headers(body=body_str)
-        url = f"https://{self._host}{self._path}"
 
         try:
             resp = httpx.post(
-                url,
+                self._url,
                 headers=headers,
-                content=body_str,
+                params=params,
+                data=data,
                 timeout=self._timeout,
             )
             resp.raise_for_status()
-            data = resp.json()
+            data_resp: dict[str, Any] = resp.json()
         except Exception as exc:
             return OCRResult(
                 provider="vivo_general_ocr",
@@ -90,51 +106,91 @@ class VivoGeneralOCRProvider:
                 raw_response_persisted=False,
             )
 
-        # 根据官方响应结构解析 blocks
+        # 解析响应：支持 pos=2 结构（result.OCR）
         blocks: list[OCRBlock] = []
-        raw_blocks = data.get("blocks") or data.get("result", {}).get("blocks") or []
-        for index, item in enumerate(raw_blocks):
-            if not isinstance(item, dict):
-                continue
-            block_id = item.get("block_id", f"vivo-ocr-{index:04d}")
-            text = item.get("text") or item.get("content") or ""
-            confidence = item.get("confidence") or item.get("score")
+        angle: int | None = None
+        warnings: list[str] = []
 
-            # 坐标解析：尝试 polygon 或 bbox
-            bbox = None
-            polygon: list[list[int]] | None = None
+        # 检查 error_code
+        error_code = data_resp.get("error_code", 0)
+        if error_code != 0:
+            return OCRResult(
+                provider="vivo_general_ocr",
+                provider_label=self.label,
+                full_text=f"vivo OCR 返回错误：error_code={error_code}",
+                blocks=[],
+                supports_bounding_boxes=False,
+                synthetic=True,
+                raw_response_persisted=False,
+            )
 
-            # 优先四点 polygon
-            raw_polygon = item.get("polygon") or item.get("polygons") or item.get("pos")
-            if isinstance(raw_polygon, list) and len(raw_polygon) == 4:
-                polygon = [[int(p.get("x", 0) if isinstance(p, dict) else p[0]), int(p.get("y", 0) if isinstance(p, dict) else p[1])] for p in raw_polygon]
-                xs = [pt[0] for pt in polygon]
-                ys = [pt[1] for pt in polygon]
-                bbox = [min(xs), min(ys), max(xs), max(ys)]
+        result = data_resp.get("result", {})
+        if isinstance(result, dict):
+            angle = result.get("angle")
+            ocr_entries = result.get("OCR", [])
+            if not isinstance(ocr_entries, list):
+                ocr_entries = []
 
-            # 其次矩形 bbox
-            if bbox is None:
-                raw_bbox = item.get("bbox") or item.get("rect") or item.get("location")
-                if isinstance(raw_bbox, list) and len(raw_bbox) == 4:
-                    bbox = [int(raw_bbox[0]), int(raw_bbox[1]), int(raw_bbox[2]), int(raw_bbox[3])]
+            for entry in ocr_entries:
+                if not isinstance(entry, dict):
+                    continue
+                words = entry.get("words", "")
+                location = entry.get("location")
+                if not words or not location:
+                    continue
 
-            blocks.append(OCRBlock(
-                block_id=block_id,
-                text=str(text),
-                bbox=bbox,
-                polygon=polygon,
-                confidence=float(confidence) if confidence is not None else None,
-            ))
+                # 从四点坐标构建 polygon
+                polygon: list[list[float]] | None = None
+                bbox: list[float] | None = None
 
-        full_text = data.get("full_text") or data.get("text", "") or " ".join(b.text for b in blocks)
+                try:
+                    top_left = location.get("top_left", {})
+                    top_right = location.get("top_right", {})
+                    down_left = location.get("down_left", {})
+                    down_right = location.get("down_right", {})
+
+                    polygon = [
+                        [float(top_left.get("x", 0)), float(top_left.get("y", 0))],
+                        [float(top_right.get("x", 0)), float(top_right.get("y", 0))],
+                        [float(down_right.get("x", 0)), float(down_right.get("y", 0))],
+                        [float(down_left.get("x", 0)), float(down_left.get("y", 0))],
+                    ]
+
+                    xs = [pt[0] for pt in polygon]
+                    ys = [pt[1] for pt in polygon]
+                    bbox = [min(xs), min(ys), max(xs), max(ys)]
+                except (ValueError, TypeError, AttributeError):
+                    pass
+
+                blocks.append(OCRBlock(
+                    block_id=f"vivo-ocr-{len(blocks):04d}",
+                    text=words,
+                    bbox=bbox,
+                    polygon=polygon,
+                    coordinate_mode="relative" if bbox else None,
+                    confidence=None,  # 官方文档未提供置信度字段
+                ))
+
+        # 回退：无 result.OCR 时尝试直接读 full_text
+        full_text = ""
+        if blocks:
+            full_text = " ".join(b.text for b in blocks)
+        else:
+            full_text = data_resp.get("full_text") or data_resp.get("text", "")
+
         supports_bbox = any(b.bbox is not None for b in blocks)
+
+        if not supports_bbox and blocks:
+            warnings.append("vivo OCR pos=2 响应未返回可解析坐标，无法提供原图高亮。")
 
         return OCRResult(
             provider="vivo_general_ocr",
             provider_label=self.label,
             full_text=full_text,
             blocks=blocks,
+            angle=angle,
             supports_bounding_boxes=supports_bbox,
             synthetic=True,
             raw_response_persisted=False,
+            warning_messages=warnings,
         )

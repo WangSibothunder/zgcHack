@@ -145,8 +145,11 @@ def validate_evidence(ev: dict[str, Any], materials: dict[str, Any]) -> None:
     missing = [key for key in required if key not in ev]
     if missing:
         raise ValueError(f"证据字段缺失: {','.join(missing)}")
-    if not 0 <= float(ev["confidence"]) <= 1:
-        raise ValueError("证据 confidence 必须在 0 到 1 之间。")
+    confidence = ev.get("confidence")
+    if confidence is not None:
+        if not 0 <= float(confidence) <= 1:
+            raise ValueError("证据 confidence 必须在 0 到 1 之间。")
+    # confidence=None 表示 live OCR 未提供置信度，允许通过
     if ev["verification_status"] not in ALLOWED_VERIFICATION_STATUSES:
         raise ValueError(f"未知核验状态: {ev['verification_status']}")
 
@@ -306,9 +309,9 @@ def vivo_smoke_test() -> dict[str, Any]:
     注意：本端点仅在 EXTERNAL_AI_ENABLED=true 且配置 vivo provider 时
     才真正调用 vivo API，否则直接返回 mock 模式状态。
     """
-    from providers.vivo_auth import build_vivo_sign_headers, redact_sensitive_headers
-
     import os
+
+    from providers.vivo_auth import build_vivo_bearer_headers, build_vivo_ocr_headers, redact_sensitive_headers
 
     app_id = os.getenv("VIVO_APP_ID", "")
     app_key = os.getenv("VIVO_APP_KEY", "")
@@ -320,15 +323,26 @@ def vivo_smoke_test() -> dict[str, Any]:
             "llm": {"provider": "mock", "reachable": None},
         }
 
-    headers = build_vivo_sign_headers(body='{"test": true}')
-    header_log = {k: v for k, v in redact_sensitive_headers(headers).items() if k != "Content-Type"}
+    bearer_headers = build_vivo_bearer_headers()
+    ocr_headers = build_vivo_ocr_headers()
     return {
         "configured": True,
-        "message": "vivo 鉴权 header 构造成功。",
-        "header_sample": header_log,
-        "ocr": {"provider": "vivo_general_ocr", "reachable": "pending_manual_test"},
-        "llm": {"provider": "vivo_bluelm", "reachable": "pending_manual_test"},
-        "debug_hint": "设置 EXTERNAL_AI_ENABLED=true 与 VIVO_APP_ID / VIVO_APP_KEY 后重启服务。",
+        "message": "vivo Bearer 鉴权 header 构造成功。",
+        "header_sample": redact_sensitive_headers(bearer_headers),
+        "ocr": {
+            "provider": "vivo_general_ocr",
+            "configured": True,
+            "auth_header": "Bearer",
+            "content_type": "application/x-www-form-urlencoded",
+            "reachable": "pending_manual_test",
+        },
+        "llm": {
+            "provider": "vivo_chat_completions",
+            "configured": True,
+            "auth_header": "Bearer",
+            "reachable": "pending_manual_test",
+        },
+        "debug_hint": "设置 EXTERNAL_AI_ENABLED=true 后重启服务可启用外部 provider。",
     }
 
 

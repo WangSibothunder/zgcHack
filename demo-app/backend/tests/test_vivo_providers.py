@@ -11,53 +11,44 @@ from providers.base import validate_llm_items
 from providers.local_evidence_llm import LocalEvidenceLLMProvider
 from providers.provider_registry import get_ocr_provider, get_llm_provider_info, get_provider_status
 from providers.synthetic_ocr import SyntheticOCRProvider
-from providers.vivo_auth import build_vivo_sign_headers, redact_sensitive_headers
+from providers.vivo_auth import build_vivo_bearer_headers, build_vivo_ocr_headers, redact_sensitive_headers
 from providers.vivo_bluelm_evidence import VivoBlueLMEvidenceProvider
 from providers.vivo_general_ocr import VivoGeneralOCRProvider
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "vivo"
 
 # ─────────────────────────────────────────────────────────────
-# vivo 鉴权测试
+# vivo 鉴权测试（Bearer 模式）
 # ─────────────────────────────────────────────────────────────
 
 
-def test_vivo_auth_headers_produced_without_env_raises_empty() -> None:
-    """未设环境变量时签名 header 仍可生成（APP_ID 与 Signature 为空字符串）。"""
-    headers = build_vivo_sign_headers(body="{}")
-    assert "Content-Type" in headers
-    assert headers["Content-Type"] == "application/json;charset=utf-8"
-    assert "X-APP-ID" in headers
-    assert "X-Signature" in headers
-    assert "X-TIMESTAMP" in headers
+def test_vivo_auth_bearer_headers_produced() -> None:
+    """未设环境变量时 Bearer header 仍可生成（token 为空字符串）。"""
+    headers = build_vivo_bearer_headers(body="{}")
+    assert "Authorization" in headers
+    assert headers["Authorization"].startswith("Bearer ")
+    assert "Content-Type" not in headers  # Bearer 模式不强制设置
 
 
-def test_vivo_auth_header_signature_changes_with_body() -> None:
-    """不同 body 产生不同签名。"""
-    headers_a = build_vivo_sign_headers(body='{"a":1}', timestamp=1000)
-    headers_b = build_vivo_sign_headers(body='{"b":2}', timestamp=1000)
-    assert headers_a["X-Signature"] != headers_b["X-Signature"]
+def test_vivo_auth_ocr_headers() -> None:
+    """OCR headers 包含 application/x-www-form-urlencoded"""
+    headers = build_vivo_ocr_headers()
+    assert "Authorization" in headers
+    assert headers["Authorization"].startswith("Bearer ")
+    assert headers["Content-Type"] == "application/x-www-form-urlencoded"
 
 
-def test_vivo_auth_header_signature_changes_with_timestamp() -> None:
-    """不同 timestamp 产生不同签名。"""
-    headers_a = build_vivo_sign_headers(body="{}", timestamp=1000)
-    headers_b = build_vivo_sign_headers(body="{}", timestamp=2000)
-    assert headers_a["X-Signature"] != headers_b["X-Signature"]
-
-
-def test_redact_sensitive_headers_masks_signature_and_app_id() -> None:
-    """脱敏函数必须掩盖密钥与 APP_ID。"""
+def test_vivo_bearer_redact_sensitive_headers() -> None:
+    """脱敏函数必须掩盖 Bearer token。"""
     headers = {
-        "Content-Type": "application/json",
-        "X-APP-ID": "ABCDEF123456",
-        "X-Signature": "abcdef1234567890abcdef1234567890abcdef12",
+        "Authorization": "Bearer ABCDEF1234567890abcdef1234567890abcdef12",
     }
     redacted = redact_sensitive_headers(headers)
-    assert redacted["X-APP-ID"] == "ABCD...56" or len(redacted["X-APP-ID"]) < len(headers["X-APP-ID"])
-    assert redacted["X-Signature"] == "abcdef...ef12" or len(redacted["X-Signature"]) < len(headers["X-Signature"])
-    assert "***" in redacted["X-APP-ID"] or "..." in redacted["X-APP-ID"]
-    assert "***" in redacted["X-Signature"] or "..." in redacted["X-Signature"]
+    # 脱敏后应保留前后4位，中间隐藏（如 "Bearer ABCD...ef12"）
+    assert "ABCD" in redacted["Authorization"]
+    assert "..." in redacted["Authorization"]
+    # 确保未暴露完整 token
+    assert "ABCDEF1234567890abcdef1234567890abcdef12" not in redacted["Authorization"]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -80,10 +71,10 @@ def test_synthetic_ocr_provider_label_contains_synthetic() -> None:
 
 
 def test_vivo_ocr_no_env_returns_fallback() -> None:
-    """未设 VIVO_APP_ID/VIVO_APP_KEY 时，VivoGeneralOCRProvider 初始化并失败
+    """未设 VIVO_APP_KEY 时，VivoGeneralOCRProvider 初始化并失败
     但返回带错误信息的 OCRResult，不抛异常。"""
     provider = VivoGeneralOCRProvider()
-    result = provider.recognize()
+    result = provider.recognize(image_bytes=b"fake-synthetic-image-data")
     assert result.provider == "vivo_general_ocr"
     # 由于没有设置环境变量中的密钥，实际调用会失败
     # 但我们至少确保不抛异常，且 full_text 中含有失败信息或为空
@@ -124,10 +115,6 @@ def test_local_evidence_llm_synonym_retrieval() -> None:
     segments = [
         {"segment_id": "seg-003", "raw_text": "患者近一周食欲欠佳，进食量较前减少。"},
     ]
-    # mock provider 匹配 logic:
-    # 1. 如果 term 在 raw_text 中 → "direct_mention"
-    # 2. 如果只在 normalized 文本中匹配 → "synonymous_mention"
-    # "食欲欠佳" 直接在原文中，所以是 direct_mention
     result = provider.rerank_and_summarize(
         query="食欲不振相关记录",
         candidate_segments=segments,
@@ -181,6 +168,7 @@ def test_vivo_bluelm_no_env_returns_empty() -> None:
     result = provider.rerank_and_summarize(query="食欲不振", candidate_segments=segments, retrieval_terms=["食欲不振"])
     # 由于没有配置 keys，调用网络会失败，返回空列表
     assert isinstance(result, list)
+    assert len(result) == 0
 
 
 # ─────────────────────────────────────────────────────────────

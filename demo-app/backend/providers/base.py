@@ -8,8 +8,9 @@ from pydantic import BaseModel, Field
 class OCRBlock(BaseModel):
     block_id: str
     text: str
-    bbox: list[int] | None = None  # [x_min, y_min, x_max, y_max]
-    polygon: list[list[int]] | None = None  # 若原响应返回四点坐标，可同时保留
+    bbox: list[float] | None = None  # [x_min, y_min, x_max, y_max]
+    polygon: list[list[float]] | None = None  # 若原响应返回四点坐标，可同时保留
+    coordinate_mode: str | None = None  # "relative" / "absolute"
     confidence: float | None = None
 
 
@@ -18,9 +19,11 @@ class OCRResult(BaseModel):
     provider_label: str = "预置合成 OCR 回放"
     full_text: str = ""
     blocks: list[OCRBlock] = Field(default_factory=list)
+    angle: int | None = None
     supports_bounding_boxes: bool = False
     synthetic: bool = True
     raw_response_persisted: bool = False
+    warning_messages: list[str] = Field(default_factory=list)
 
 
 class LLMGroundedItem(BaseModel):

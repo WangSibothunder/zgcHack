@@ -32,3 +32,8 @@ demo-app/backend/runtime/
 *.sqlite3
 *.db
 *.log
+
+# external API debug artifacts
+*vivo_api_raw_request*
+*vivo_api_raw_response*
+*external_api_debug*

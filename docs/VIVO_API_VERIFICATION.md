@@ -1,4 +1,7 @@
-# vivo AI 平台 API 接入验证报告（模板）
+# vivo AI 平台 API 接入验证报告
+
+> 最后更新：2026-05-25
+> 验证依据：用户已提供 v0.9.1 官方文档正文，确认字段已核实。
 
 ## 1. 目标
 
@@ -7,138 +10,77 @@
 
 ## 2. 前置条件
 
-- [ ] 已从 [vivo AIGC 创新赛平台](https://aigc.vivo.com.cn/) 申请到 APP_ID 与 APP_KEY。
-- [ ] 已确认使用的 API 端点：
-  - OCR: `/ocr/general_recognition`（或实际分配的端点）
-  - BlueLM: `/v1/chat/completions`（或实际分配的端点）
-- [ ] 已在 `.env` 中填写：
+- [x] 已从 [vivo AIGC 创新赛平台](https://aigc.vivo.com.cn/) 申请到 APP_ID 与 APP_KEY。
+- [x] 已确认使用的 API 端点（已核实）：
+  - OCR: `http://api-ai.vivo.com.cn/ocr/general_recognition`
+  - Chat Completions: `https://api-ai.vivo.com.cn/v1/chat/completions`
+- [ ] 已进行真实凭证 smoke test（未执行，因本地无有效凭证）
 
-```bash
-EXTERNAL_AI_ENABLED=true
-OCR_PROVIDER=vivo_general_ocr
-LLM_PROVIDER=vivo_bluelm
-VIVO_APP_ID=您的APP_ID
-VIVO_APP_KEY=您的APP_KEY
-```
+## 3. OCR API 核验结论
 
-## 3. OCR API 验证
+| 项目 | 已核实值 | 实现状态 |
+| --- | --- | --- |
+| 服务名称 | 通用 OCR | ✅ Provider: `VivoGeneralOCRProvider` |
+| 接口地址 | `http://api-ai.vivo.com.cn/ocr/general_recognition` | ✅ 可配置，默认 HTTP |
+| 请求方式 | `POST` | ✅ |
+| Content-Type | `application/x-www-form-urlencoded` | ✅ |
+| 鉴权 | `Authorization: Bearer AppKey` | ✅ |
+| Query | `requestId=<uuid>`（必须） | ✅ |
+| Body: `image` | base64，支持 jpg/png/bmp | ✅ |
+| Body: `pos` | 0/1/2；本项目固定 `pos=2` | ✅ |
+| Body: `businessid` | `"aigc"` + AppId | ✅ 含 env override |
+| Body: `sessid` | 可选 UUID | ✅ |
+| 返回：`error_code` | 0=成功，1=OCR失败，2=图像错误 | ✅ |
+| 返回：`result.OCR[].words` | 文字 | ✅ |
+| 返回：`result.OCR[].location` | 四点坐标（top_left/top_right/down_left/down_right） | ✅ 转换为 polygon & bbox |
+| 返回：`angle` | 0/90/180/270 | ✅ 保存 |
+| OCR 置信度 | ❌ **官方文档未列出** | ✅ live OCR confidence=null |
+| 安全限制 | 官方文档为 HTTP | ⚠️ 仅允许 synthetic demo 调用 |
 
-### 3.1 使用 Smoke Test 端点
+### 3.1 HTTPS 可用性
 
-```bash
-curl -X POST http://localhost:8000/api/v3/demo/providers/vivo/smoke-test
-```
+未测试。默认配置保持 `VIVO_OCR_BASE_URL=http://api-ai.vivo.com.cn`，用户可手动改为 HTTPS 测试。
 
-预期返回：
+### 3.2 坐标模式
 
-```json
-{
-  "configured": true,
-  "message": "vivo 鉴权 header 构造成功。",
-  "header_sample": { "X-APP-ID": "ABCD...56", "X-TIMESTAMP": "...", "X-Signature": "abcdef...ef12" }
-}
-```
+`pos=2` 返回相对坐标（非归一化 0-1），provider 保留 `coordinate_mode="relative"`。
+前端 `EvidenceCanvas` 需将相对坐标按图片展示尺寸映射。
 
-### 3.2 直接调用 OCR API
+## 4. LLM API 核验结论
 
-使用 Python 脚本或 curl 向 vivo 通用 OCR 发送一张合成图片：
+| 项目 | 已核实值 | 实现状态 |
+| --- | --- | --- |
+| 接口地址 | `https://api-ai.vivo.com.cn/v1/chat/completions` | ✅ Provider: `VivoBlueLMEvidenceProvider`（mode=vivo_chat_completions）|
+| 协议 | OpenAI-compatible Chat Completions | ✅ |
+| 鉴权 | `Authorization: Bearer AppKey` | ✅ |
+| Query 参数 | 表格写 `requestId`，示例用 `request_id` | ✅ 默认 `request_id`，兼容重试 `requestId` |
+| 可用模型 | `Volc-DeepSeek-V3.2` / `Doubao-Seed-2.0-mini/lite/pro` / `qwen3.5-plus` | ✅ env 配置 |
+| `stream` | true/false | ✅ 固定 false |
+| `max_tokens` | 可选，默认 4096 | ✅ 设为 1024 |
+| `reasoning_effort` | minimal/low/medium/high | ✅ DeepSeek 模型使用 |
+| `enable_thinking` | 可选 | ✅ qwen 模型使用 |
+| Function Calling | 文档支持，但本项目不使用 | ✅ 明确不引入 |
 
-```python
-import requests, base64, hmac, hashlib, json, time
+### 4.1 request id 参数兼容
 
-app_id = "your_app_id"
-app_key = "your_app_key"
-image_b64 = base64.b64encode(open("demo-data/assets/evidence-query-001/2025-01-09-followup.svg", "rb").read()).decode()
-body = json.dumps({"image": image_b64, "businessId": ""})
+默认使用 `request_id`（文档 Python/requests 示例用）。若返回 1001 错误，仅重试一次用 `requestId`。最终成功字段需在实际 smoke test 中确定。
 
-timestamp = int(time.time())
-sign = hmac.new(app_key.encode(), f"{body}{timestamp}".encode(), hashlib.sha256).hexdigest()
-headers = {"Content-Type": "application/json", "X-APP-ID": app_id, "X-TIMESTAMP": str(timestamp), "X-Signature": sign}
+### 4.2 当前状态
 
-resp = requests.post("https://api-ai.vivo.com.cn/ocr/general_recognition", data=body, headers=headers)
-print(resp.status_code, resp.text[:500])
-```
-
-验证项目：
-- [ ] HTTP 200 响应
-- [ ] 响应中包含 `blocks` 列表
-- [ ] 至少一个 block 包含 `text`、`confidence`
-- [ ] 是否返回 `polygon`/`bbox`/`pos` 坐标（决定 `supports_bounding_boxes`）
-- [ ] 中文识别准确率
-- [ ] 文件大小限制
-
-### 3.3 书面向导决定
-
-如果 OCR API **返回 bbox** → `supports_bounding_boxes=True`，可用于原图高亮。
-如果 OCR API **只返回纯文本** → `supports_bounding_boxes=False`，保留 sidecar bbox 演示路径，
-UI 中说明"该 API 模式下仅能回到材料页，无法定位到文字框"。
-
-## 4. BlueLM API 验证
-
-### 4.1 验证 BlueLM 端点兼容性
-
-用 Python 脚本直接测试：
-
-```python
-import requests, json, hmac, hashlib, time
-
-app_id = "your_app_id"
-app_key = "your_app_key"
-body = json.dumps({
-    "model": "BlueLM",
-    "messages": [{"role": "user", "content": "你好"}]
-})
-
-timestamp = int(time.time())
-sign = hmac.new(app_key.encode(), f"{body}{timestamp}".encode(), hashlib.sha256).hexdigest()
-headers = {"Content-Type": "application/json", "X-APP-ID": app_id, "X-TIMESTAMP": str(timestamp), "X-Signature": sign}
-
-resp = requests.post("https://api-ai.vivo.com.cn/v1/chat/completions", data=body, headers=headers)
-print(resp.status_code, resp.text[:500])
-```
-
-验证项目：
-- [ ] HTTP 200 响应
-- [ ] 响应结构是否与 `choices[0].message.content` 兼容
-- [ ] 是否支持 system prompt
-- [ ] 是否支持 JSON mode 或 JSON output
-
-### 4.2 E2E 验证
-
-启动后端并执行：
-
-```bash
-export EXTERNAL_AI_ENABLED=true
-export OCR_PROVIDER=vivo_general_ocr
-export LLM_PROVIDER=vivo_bluelm
-export VIVO_APP_ID=your_id
-export VIVO_APP_KEY=your_key
-cd demo-app/backend && uvicorn app:app
-```
-
-然后执行：
-
-```bash
-curl -X POST http://localhost:8000/api/v3/demo/evidence-search \
-  -d '{"case_id": "demo-evidence-query-appetite-001", "question": "病人最近的材料中是否提到食欲不振？", "trigger_type": "question", "top_k": 5}' \
-  -H 'Content-Type: application/json'
-```
-
-验证：
-- [ ] 返回结果包含 items
-- [ ] item 有 `segment_id`、`relevance_level`、`source_excerpt`
-- [ ] `llm_mode` 为 `"vivo_bluelm"`
-- [ ] 无结果时返回安全文案
+未进行真实凭证 smoke test（因本地无有效 API 凭证）。所有 API 行为验证通过 mock 单元测试完成。
 
 ## 5. 踩坑记录
 
 | 问题 | 发现日期 | 解决方案 |
-|------|---------|---------|
-| (待填写) | | |
-| (待填写) | | |
+| --- | --- | --- |
+| v0.8 `validate_evidence` 强制 confidence 在 0-1 之间，但 vivo 官方无此字段 | 2026-05-25 | ✅ 已修：`confidence=None` 允许通过 |
+| `vivo_auth.py` 旧版使用 HMAC-SHA256 签名（X-APP-ID + X-Signature） | 2026-05-25 | ✅ 已修：改为 Bearer 模式 |
+| `provider_registry.py` 中 LLM mode 写为 `vivo_bluelm` | 2026-05-25 | ✅ 已修：改为 `vivo_chat_completions` |
+| `.gitignore` 缺少 vivo raw response 的忽略规则 | 2026-05-25 | ✅ 已修 |
+| `app.py` smoke-test 端点在重构后遗留了 `build_vivo_sign_headers` 导入 | 2026-05-25 | ✅ 已更新为 `build_vivo_bearer_headers` |
 
 ## 6. 验证结论
 
-- OCR API: [ ] 成功接入 bbox / [ ] 成功接入纯文本 / [ ] 使用 fallback
-- BlueLM LLM: [ ] 成功接入 / [ ] 无法使用 / [ ] 使用 mock fallback
-- 最后验证日期：_________________
+- OCR API: [ ] 成功接入 bbox / [x] 适配器就绪，等待真实凭证 / [x] 透明 fallback 到 sidecar
+- LLM API: [ ] 成功接入 / [x] 适配器就绪，等待真实凭证 / [x] 透明 fallback 到本地检索
+- 最后验证日期：2026-05-25（仅单元测试，未进行真实 API 调用）
