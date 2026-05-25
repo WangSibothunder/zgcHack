@@ -1,0 +1,17 @@
+{
+  "blocks": [
+    {
+      "block_id": "b003",
+      "text": "患者近一周食欲欠佳，进食量较前减少。",
+      "confidence": 0.94
+    },
+    {
+      "block_id": "b004",
+      "text": "体温 36.5℃，血压 120/80 mmHg。",
+      "confidence": 0.88
+    }
+  ],
+  "full_text": "患者近一周食欲欠佳，进食量较前减少。体温 36.5℃，血压 120/80 mmHg。",
+  "supports_bounding_boxes": false,
+  "synthetic": true
+}

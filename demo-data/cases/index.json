@@ -25,6 +25,14 @@
       "transfer_reason": "携带病理与阶段治疗记录转诊复核",
       "node_count": 4,
       "abnormal_flag_count": 1
+    },
+    {
+      "case_id": "demo-evidence-query-appetite-001",
+      "patient_display": "演示患者 D04，女，54 岁",
+      "destination_department": "内科",
+      "transfer_reason": "外院材料中多次出现进食相关记录，转入后需整理既往证据",
+      "node_count": 4,
+      "abnormal_flag_count": 0
     }
   ]
 }

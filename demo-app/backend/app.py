@@ -11,6 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from providers.provider_registry import get_provider_status, get_ocr_provider, get_llm_provider_info
+from services.evidence_search import list_query_history, rebuild_segments, search_evidence
 from services.ingestion import create_ingestion_job, find_anchor, get_job as get_ingestion_job, merge_runtime_nodes
 from services.review_store import apply_reviews_to_case, save_review
 from services.storage import RUNTIME_DIR, clear_runtime, ensure_runtime_dirs
@@ -37,6 +39,16 @@ class ReviewRequest(BaseModel):
     corrected_value: str | None = None
     note: str = ""
     reviewer_role: str = "接诊医生（演示）"
+
+
+class EvidenceSearchRequest(BaseModel):
+    case_id: str
+    trigger_type: str = "question"
+    question: str | None = None
+    selected_segment_ids: list[str] = Field(default_factory=list)
+    selected_material_id: str | None = None
+    selected_text: str | None = None
+    top_k: int = Field(default=5, ge=1, le=10)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -151,7 +163,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="转诊迹 Synthetic Demo API", version="0.8.0", lifespan=lifespan)
+app = FastAPI(title="转诊迹 Synthetic Demo API", version="0.9.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -257,6 +269,67 @@ def review_evidence(anchor_id: str, payload: ReviewRequest) -> dict[str, Any]:
 @app.get("/api/v2/demo/cases/{case_id}/summary")
 def get_case_summary(case_id: str) -> dict[str, Any]:
     return build_summary(load_case(case_id))
+
+
+@app.post("/api/v3/demo/cases/{case_id}/segments/rebuild")
+def rebuild_case_segments(case_id: str) -> dict[str, Any]:
+    try:
+        return rebuild_segments(load_case(case_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/v3/demo/evidence-search")
+def evidence_search(payload: EvidenceSearchRequest) -> dict[str, Any]:
+    try:
+        return search_evidence(load_case(payload.case_id), payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/v3/demo/cases/{case_id}/evidence-search-history")
+def evidence_search_history(case_id: str) -> dict[str, Any]:
+    load_case(case_id)
+    return list_query_history(case_id)
+
+
+@app.get("/api/v3/demo/providers/status")
+def provider_status() -> dict[str, Any]:
+    """返回当前 OCR 与 LLM provider 配置状态。"""
+    return get_provider_status()
+
+
+@app.post("/api/v3/demo/providers/vivo/smoke-test")
+def vivo_smoke_test() -> dict[str, Any]:
+    """测试 vivo provider 配置是否有效。
+
+    注意：本端点仅在 EXTERNAL_AI_ENABLED=true 且配置 vivo provider 时
+    才真正调用 vivo API，否则直接返回 mock 模式状态。
+    """
+    from providers.vivo_auth import build_vivo_sign_headers, redact_sensitive_headers
+
+    import os
+
+    app_id = os.getenv("VIVO_APP_ID", "")
+    app_key = os.getenv("VIVO_APP_KEY", "")
+    if not app_id or not app_key:
+        return {
+            "configured": False,
+            "message": "VIVO_APP_ID 或 VIVO_APP_KEY 未配置，无法执行 smoke test。",
+            "ocr": {"provider": "mock", "reachable": None},
+            "llm": {"provider": "mock", "reachable": None},
+        }
+
+    headers = build_vivo_sign_headers(body='{"test": true}')
+    header_log = {k: v for k, v in redact_sensitive_headers(headers).items() if k != "Content-Type"}
+    return {
+        "configured": True,
+        "message": "vivo 鉴权 header 构造成功。",
+        "header_sample": header_log,
+        "ocr": {"provider": "vivo_general_ocr", "reachable": "pending_manual_test"},
+        "llm": {"provider": "vivo_bluelm", "reachable": "pending_manual_test"},
+        "debug_hint": "设置 EXTERNAL_AI_ENABLED=true 与 VIVO_APP_ID / VIVO_APP_KEY 后重启服务。",
+    }
 
 
 @app.post("/api/v2/demo/runtime/reset")

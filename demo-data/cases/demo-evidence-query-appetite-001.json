@@ -1,0 +1,288 @@
+{
+  "synthetic": true,
+  "notice": "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。",
+  "case_id": "demo-evidence-query-appetite-001",
+  "patient": {
+    "display_name": "演示患者 D04",
+    "sex": "女",
+    "age_display": "54 岁"
+  },
+  "transfer": {
+    "origin_hospital": "云川医学中心（虚构）",
+    "destination_hospital": "澄明医学中心",
+    "destination_department": "内科",
+    "reason": "外院材料中多次出现进食相关记录，转入后需整理既往证据",
+    "coverage": "2024-12-20 至 2025-01-14"
+  },
+  "timeline_nodes": [
+    {
+      "node_id": "node-appetite-20241220",
+      "date": "2024-12-20",
+      "hospital_department": "云川医学中心（虚构）｜消化内科",
+      "document_type": "门诊病历",
+      "headline": "门诊病历记录",
+      "summary": "合成门诊材料中出现“纳差 3 日”的原文片段，供证据联查演示。",
+      "tags": [
+        {"label": "证据联查样例", "level": "info"},
+        {"label": "待医生核验", "level": "warning"}
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": ["mat-appetite-20241220-clinic"],
+      "structured_fields": {
+        "材料类型": "门诊病历",
+        "原文片段": "主诉：纳差 3 日。"
+      },
+      "ocr_excerpt": "合成演示材料｜门诊病历｜主诉：纳差 3 日。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-nacha",
+          "material_id": "mat-appetite-20241220-clinic",
+          "field_key": "原文片段",
+          "display_value": "主诉：纳差 3 日。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "纳差 3 日",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20241220-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    {
+      "node_id": "node-appetite-20250109",
+      "date": "2025-01-09",
+      "hospital_department": "云川医学中心（虚构）｜消化内科",
+      "document_type": "门诊随访",
+      "headline": "随访材料记录",
+      "summary": "合成随访材料中明确写有食欲欠佳及进食量减少。",
+      "tags": [
+        {"label": "直接提及", "level": "success"},
+        {"label": "证据联查样例", "level": "info"}
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": ["mat-appetite-20250109-followup"],
+      "structured_fields": {
+        "材料类型": "门诊随访",
+        "原文片段": "患者近一周食欲欠佳，进食量较前减少。"
+      },
+      "ocr_excerpt": "合成演示材料｜门诊随访｜患者近一周食欲欠佳，进食量较前减少。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-poor",
+          "material_id": "mat-appetite-20250109-followup",
+          "field_key": "原文片段",
+          "display_value": "患者近一周食欲欠佳，进食量较前减少。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "食欲欠佳，进食量较前减少",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250109-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    {
+      "node_id": "node-appetite-20250112",
+      "date": "2025-01-12",
+      "hospital_department": "澄明医学中心｜内科",
+      "document_type": "入院记录",
+      "headline": "入院记录材料",
+      "summary": "合成入院记录再次出现“食欲不振”描述。",
+      "tags": [
+        {"label": "直接提及", "level": "success"},
+        {"label": "证据联查样例", "level": "info"}
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": ["mat-appetite-20250112-admission"],
+      "structured_fields": {
+        "材料类型": "入院记录",
+        "原文片段": "食欲不振，否认明显呕吐。"
+      },
+      "ocr_excerpt": "合成演示材料｜入院记录｜食欲不振，否认明显呕吐。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-loss",
+          "material_id": "mat-appetite-20250112-admission",
+          "field_key": "原文片段",
+          "display_value": "食欲不振，否认明显呕吐。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "食欲不振",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250112-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    {
+      "node_id": "node-appetite-20250114",
+      "date": "2025-01-14",
+      "hospital_department": "澄明医学中心｜检验科",
+      "document_type": "检查报告",
+      "headline": "无关检查材料",
+      "summary": "用于验证证据联查不会误召回与食欲无关的材料。",
+      "tags": [
+        {"label": "无关对照", "level": "info"}
+      ],
+      "related_to_transfer_reason": false,
+      "has_abnormal_flag": false,
+      "materials": ["mat-appetite-20250114-lab"],
+      "structured_fields": {
+        "材料类型": "检查报告",
+        "示例字段": "WBC 6.1 x10^9/L"
+      },
+      "ocr_excerpt": "合成演示材料｜检查报告｜血常规示例字段：WBC 6.1 x10^9/L。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-unrelated",
+          "material_id": "mat-appetite-20250114-lab",
+          "field_key": "示例字段",
+          "display_value": "WBC 6.1 x10^9/L",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "WBC",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250114-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    }
+  ],
+  "materials": {
+    "mat-appetite-20241220-clinic": {
+      "material_id": "mat-appetite-20241220-clinic",
+      "title": "合成门诊病历｜纳差记录",
+      "image_url": "/assets/evidence-query-001/2024-12-20-clinic.svg",
+      "ocr_text": "合成演示材料｜云川医学中心（虚构）｜门诊病历｜消化内科｜2024-12-20｜主诉：纳差 3 日。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-appetite-20241220-main", "text": "主诉：纳差 3 日。", "bbox": [80, 206, 840, 264], "confidence": 0.95}
+      ],
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-nacha",
+          "material_id": "mat-appetite-20241220-clinic",
+          "field_key": "原文片段",
+          "display_value": "主诉：纳差 3 日。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "纳差 3 日",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20241220-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    "mat-appetite-20250109-followup": {
+      "material_id": "mat-appetite-20250109-followup",
+      "title": "合成门诊随访｜食欲欠佳记录",
+      "image_url": "/assets/evidence-query-001/2025-01-09-followup.svg",
+      "ocr_text": "合成演示材料｜门诊随访｜消化内科｜2025-01-09｜患者近一周食欲欠佳，进食量较前减少。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-appetite-20250109-main", "text": "患者近一周食欲欠佳，进食量较前减少。", "bbox": [80, 206, 840, 264], "confidence": 0.96}
+      ],
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-poor",
+          "material_id": "mat-appetite-20250109-followup",
+          "field_key": "原文片段",
+          "display_value": "患者近一周食欲欠佳，进食量较前减少。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "食欲欠佳，进食量较前减少",
+          "confidence": 0.96,
+          "ocr_confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250109-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    "mat-appetite-20250112-admission": {
+      "material_id": "mat-appetite-20250112-admission",
+      "title": "合成入院记录｜食欲不振记录",
+      "image_url": "/assets/evidence-query-001/2025-01-12-admission.svg",
+      "ocr_text": "合成演示材料｜入院记录｜内科｜2025-01-12｜食欲不振，否认明显呕吐。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-appetite-20250112-main", "text": "食欲不振，否认明显呕吐。", "bbox": [80, 206, 840, 264], "confidence": 0.94}
+      ],
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-loss",
+          "material_id": "mat-appetite-20250112-admission",
+          "field_key": "原文片段",
+          "display_value": "食欲不振，否认明显呕吐。",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "食欲不振",
+          "confidence": 0.94,
+          "ocr_confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250112-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    },
+    "mat-appetite-20250114-lab": {
+      "material_id": "mat-appetite-20250114-lab",
+      "title": "合成检查报告｜无关对照",
+      "image_url": "/assets/evidence-query-001/2025-01-14-lab.svg",
+      "ocr_text": "合成演示材料｜检查报告｜检验科｜2025-01-14｜血常规示例字段：WBC 6.1 x10^9/L。",
+      "ocr_mode": "deterministic_synthetic",
+      "ocr_mode_label": "预置合成 OCR 演示回放",
+      "ocr_blocks": [
+        {"block_id": "ocr-appetite-20250114-main", "text": "血常规示例字段：WBC 6.1 x10^9/L。", "bbox": [80, 206, 840, 264], "confidence": 0.95}
+      ],
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-appetite-unrelated",
+          "material_id": "mat-appetite-20250114-lab",
+          "field_key": "示例字段",
+          "display_value": "WBC 6.1 x10^9/L",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "WBC",
+          "confidence": 0.95,
+          "ocr_confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false,
+          "ocr_block_ids": ["ocr-appetite-20250114-main"],
+          "bbox": [80, 206, 840, 264],
+          "source_mode": "deterministic_synthetic"
+        }
+      ]
+    }
+  },
+  "available_filters": {
+    "abnormal_only": true,
+    "document_types": ["门诊病历", "门诊随访", "入院记录", "检查报告"],
+    "transfer_related": true
+  },
+  "missing_material_reminders": [
+    "当前证据联查样例仅用于检索演示；未发现相关材料时，请人工核对是否需要补充。"
+  ]
+}

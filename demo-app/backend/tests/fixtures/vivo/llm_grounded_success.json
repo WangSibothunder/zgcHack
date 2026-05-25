@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "segment_id": "seg-known-001",
+      "relevance_level": "direct_mention",
+      "evidence_summary": "该记录明确提到食欲欠佳及进食量减少。"
+    },
+    {
+      "segment_id": "seg-known-003",
+      "relevance_level": "synonymous_mention",
+      "evidence_summary": "该记录再次出现食欲不振描述。"
+    }
+  ],
+  "expanded_terms": ["食欲不振", "食欲欠佳", "纳差", "进食减少"]
+}

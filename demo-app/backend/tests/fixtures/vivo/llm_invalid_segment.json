@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "segment_id": "seg-nonexistent",
+      "relevance_level": "direct_mention",
+      "evidence_summary": "这是不存在的片段，应被丢弃。"
+    },
+    {
+      "segment_id": "seg-known-001",
+      "relevance_level": "unknown_level",
+      "evidence_summary": "有效片段。"
+    }
+  ],
+  "expanded_terms": ["食欲不振"]
+}

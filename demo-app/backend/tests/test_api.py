@@ -3,6 +3,8 @@ from pathlib import Path
 import pytest
 
 from app import app
+from services.external_ai import ExternalOCRApiProvider, SyntheticExternalApiError, assert_synthetic_external_api_allowed
+from services.evidence_search import merge_llm_results
 from services.storage import clear_runtime
 
 client = TestClient(app)
@@ -24,7 +26,7 @@ def test_health() -> None:
 def test_case_list_is_synthetic_and_has_three_cases() -> None:
     payload = client.get("/api/v1/demo/cases").json()
     assert payload["synthetic"] is True
-    assert len(payload["cases"]) >= 3
+    assert len(payload["cases"]) >= 4
     assert len({case["case_id"] for case in payload["cases"]}) == len(payload["cases"])
 
 
@@ -203,3 +205,117 @@ def test_v2_review_persists_and_summary_counts_update() -> None:
     summary = client.get("/api/v2/demo/cases/demo-cardiac-transfer-001/summary").json()
     assert summary["review_counts"]["confirmed"] >= 1
     assert summary["uploaded_material_count"] >= 1
+
+
+def test_v3_rebuilds_segments_for_appetite_case() -> None:
+    response = client.post("/api/v3/demo/cases/demo-evidence-query-appetite-001/segments/rebuild")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["synthetic"] is True
+    assert payload["segment_count"] == 4
+    assert payload["index_mode"] == "json_substring_with_synonym_fallback"
+
+
+def test_v3_appetite_question_recalls_synonym_segments_with_bbox() -> None:
+    response = client.post(
+        "/api/v3/demo/evidence-search",
+        json={
+            "case_id": "demo-evidence-query-appetite-001",
+            "trigger_type": "question",
+            "question": "病人最近的材料中是否提到食欲不振？",
+            "top_k": 5,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    excerpts = [item["source_excerpt"] for item in payload["items"]]
+    assert "食欲不振" in "".join(excerpts)
+    assert "食欲欠佳" in "".join(excerpts)
+    assert "纳差" in "".join(excerpts)
+    assert "WBC" not in "".join(excerpts)
+    assert payload["not_found_note"] is None
+    assert all(item["material_id"] and item["node_id"] and item["segment_id"] for item in payload["items"])
+    assert all(item["bbox"] for item in payload["items"])
+    assert all(item["anchor_id"] for item in payload["items"])
+
+
+def test_v3_no_result_uses_safe_boundary_copy() -> None:
+    response = client.post(
+        "/api/v3/demo/evidence-search",
+        json={
+            "case_id": "demo-evidence-query-appetite-001",
+            "trigger_type": "question",
+            "question": "材料中是否记录睡眠打鼾？",
+            "top_k": 5,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"] == []
+    assert "未检索到明确相关记载" in payload["result_statement"]
+    assert "不代表患者不存在该情况" in payload["not_found_note"]
+
+
+def test_v3_selection_search_excludes_current_material_and_records_history() -> None:
+    response = client.post(
+        "/api/v3/demo/evidence-search",
+        json={
+            "case_id": "demo-evidence-query-appetite-001",
+            "trigger_type": "selection",
+            "selected_material_id": "mat-appetite-20250109-followup",
+            "selected_text": "患者近一周食欲欠佳，进食量较前减少。",
+            "top_k": 5,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"]
+    assert all(item["material_id"] != "mat-appetite-20250109-followup" for item in payload["items"])
+    history = client.get("/api/v3/demo/cases/demo-evidence-query-appetite-001/evidence-search-history").json()
+    assert history["queries"]
+    assert history["queries"][0]["result_segment_ids"]
+
+
+def test_external_ocr_mapping_marks_bbox_support() -> None:
+    mapped = ExternalOCRApiProvider().map_response(
+        {
+            "blocks": [
+                {"text": "食欲不振", "bbox": [1, 2, 30, 40], "confidence": 0.93},
+                {"text": "纯文本行", "confidence": 0.8},
+            ]
+        }
+    )
+    assert mapped["supports_bounding_boxes"] is True
+    assert mapped["blocks"][0]["bbox"] == [1, 2, 30, 40]
+    assert mapped["blocks"][1]["bbox"] is None
+
+
+def test_external_api_rejects_non_synthetic_payload() -> None:
+    with pytest.raises(SyntheticExternalApiError):
+        assert_synthetic_external_api_allowed({"synthetic": False})
+
+
+def test_unknown_llm_segment_ids_are_dropped() -> None:
+    segments = [
+        {
+            "segment_id": "seg-known",
+            "material_id": "mat-1",
+            "node_id": "node-1",
+            "anchor_id": "ev-1",
+            "document_date": "2025-01-01",
+            "document_type": "门诊病历",
+            "raw_text": "食欲不振",
+            "bboxes": [[1, 2, 3, 4]],
+            "ocr_confidence": 0.9,
+            "verification_status": "unreviewed",
+        }
+    ]
+    items = merge_llm_results(
+        [{"segment_id": "seg-missing", "relevance_level": "direct_mention", "evidence_summary": "不应出现"}],
+        segments,
+        ["食欲不振"],
+        3,
+        "mock",
+    )
+    assert len(items) == 1
+    assert items[0]["segment_id"] == "seg-known"

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+<rect width="900" height="620" fill="#f8fafc"/>
+<rect x="28" y="28" width="844" height="564" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="28" y="28" width="844" height="82" rx="18" fill="#dbeafe"/>
+<text x="44" y="78" font-size="26" font-weight="700" fill="#1d4ed8" font-family="Arial, PingFang SC, Microsoft YaHei">合成演示材料 / SYNTHETIC DEMO DOCUMENT</text>
+<text x="44" y="56" font-size="22" fill="#1f2937" font-family="Arial, PingFang SC, Microsoft YaHei">合成演示材料 / SYNTHETIC DEMO DOCUMENT</text>
+<text x="44" y="110" font-size="22" fill="#1f2937" font-family="Arial, PingFang SC, Microsoft YaHei">演示患者 D04｜澄明医学中心</text>
+<text x="44" y="164" font-size="22" fill="#1f2937" font-family="Arial, PingFang SC, Microsoft YaHei">检查报告｜检验科｜2025-01-14</text>
+<text x="44" y="218" font-size="22" fill="#1f2937" font-family="Arial, PingFang SC, Microsoft YaHei">血常规示例字段：WBC 6.1 x10^9/L。</text>
+<text x="44" y="272" font-size="22" fill="#1f2937" font-family="Arial, PingFang SC, Microsoft YaHei">该页不包含食欲相关表述。</text>
+<rect x="80" y="206" width="760" height="58" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="8 6"/>
+<text x="44" y="574" font-size="16" fill="#64748b" font-family="Arial, PingFang SC, Microsoft YaHei">不对应真实患者，仅用于证据联查演示。</text>
+</svg>

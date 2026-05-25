@@ -12,10 +12,12 @@ UPLOADS_DIR = RUNTIME_DIR / "uploads"
 JOBS_DIR = RUNTIME_DIR / "jobs"
 REVIEWS_DIR = RUNTIME_DIR / "reviews"
 GENERATED_CASES_DIR = RUNTIME_DIR / "generated_cases"
+EVIDENCE_INDEX_DIR = RUNTIME_DIR / "evidence_index"
+EVIDENCE_QUERIES_DIR = RUNTIME_DIR / "evidence_queries"
 
 
 def ensure_runtime_dirs() -> None:
-    for path in [UPLOADS_DIR, JOBS_DIR, REVIEWS_DIR, GENERATED_CASES_DIR]:
+    for path in [UPLOADS_DIR, JOBS_DIR, REVIEWS_DIR, GENERATED_CASES_DIR, EVIDENCE_INDEX_DIR, EVIDENCE_QUERIES_DIR]:
         path.mkdir(parents=True, exist_ok=True)
 
 

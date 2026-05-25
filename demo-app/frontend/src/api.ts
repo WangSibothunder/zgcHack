@@ -2,6 +2,8 @@ import type {
   CaseListResponse,
   CaseSummaryV2,
   EvidenceReview,
+  EvidenceSearchRequest,
+  EvidenceSearchResponse,
   IngestionJob,
   Material,
   ReviewAction,
@@ -81,6 +83,20 @@ export function reviewEvidence(
 
 export function getPreConsultSummary(caseId: string): Promise<CaseSummaryV2> {
   return request<CaseSummaryV2>(`/api/v2/demo/cases/${caseId}/summary`);
+}
+
+export function rebuildEvidenceSegments(caseId: string): Promise<{ case_id: string; segment_count: number; index_mode: string; synthetic: true }> {
+  return request(`/api/v3/demo/cases/${caseId}/segments/rebuild`, {
+    method: "POST",
+  });
+}
+
+export function searchEvidence(payload: EvidenceSearchRequest): Promise<EvidenceSearchResponse> {
+  return request<EvidenceSearchResponse>("/api/v3/demo/evidence-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 }
 
 export function assetUrl(imageUrl: string): string {

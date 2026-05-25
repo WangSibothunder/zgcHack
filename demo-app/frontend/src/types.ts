@@ -189,3 +189,49 @@ export interface CaseSummaryV2 {
   missing_material_reminders: string[];
   boundary: string;
 }
+
+export type EvidenceSearchTrigger = "question" | "selection" | "field";
+
+export interface EvidenceSearchItem {
+  rank: number;
+  relevance_level: "direct_mention" | "synonymous_mention" | "contextual";
+  relevance_label: string;
+  material_id: string;
+  node_id: string;
+  segment_id: string;
+  anchor_id?: string;
+  document_date: string | null;
+  document_type: string;
+  hospital_name?: string | null;
+  department?: string | null;
+  source_excerpt: string;
+  evidence_summary: string;
+  bbox?: [number, number, number, number] | null;
+  ocr_confidence: number;
+  ranking_source: string;
+  verification_status: VerificationStatus;
+}
+
+export interface EvidenceSearchRequest {
+  case_id: string;
+  trigger_type: EvidenceSearchTrigger;
+  question?: string;
+  selected_segment_ids?: string[];
+  selected_material_id?: string;
+  selected_text?: string;
+  top_k?: number;
+}
+
+export interface EvidenceSearchResponse {
+  query_id: string;
+  case_id: string;
+  answer_mode: "evidence_only";
+  query_display: string;
+  retrieval_terms: string[];
+  result_statement: string;
+  items: EvidenceSearchItem[];
+  not_found_note: string | null;
+  llm_mode: "external_api" | "mock" | "unavailable_fallback" | string;
+  notice: string;
+  synthetic: true;
+}

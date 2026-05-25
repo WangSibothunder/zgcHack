@@ -95,6 +95,32 @@ npm run smoke
 
 当前 OCR 模式为 `deterministic_synthetic`，页面显示“预置合成 OCR 演示回放”。这是一种可复现 fallback，不伪称真实 OCR 引擎处理。
 
+## v0.9 证据联查演示
+
+1. 进入医生时间轴，在顶部"证据联查"搜索框中输入"病人最近的材料中是否提到食欲不振？"
+2. 系统返回关联的材料记录，包含日期、文档类型、原文片段和"查看原图证据"按钮。
+3. 点击"查看原图证据"，时间轴定位到对应节点，原图上高亮显示相关文字。
+4. 选中节点详情页中的某段 OCR 文本，选择"联查相关证据"，文本下方展示其他日期的关联材料。
+5. 无结果时系统显示"当前未检索到明确相关记载，不代表患者不存在该情况"的安全文案。
+
+### Provider 状态查看
+
+```bash
+# 查看当前 OCR 与 LLM provider 配置
+curl http://localhost:8000/api/v3/demo/providers/status
+
+# 测试 vivo 鉴权配置（需先设置 VIVO_APP_ID / VIVO_APP_KEY）
+curl -X POST http://localhost:8000/api/v3/demo/providers/vivo/smoke-test
+```
+
+启用外部 API（需有效 vivo 平台 APP_ID/APP_KEY）：
+
+```bash
+cd demo-app/backend
+cp ../../.env.example .env
+# 编辑 .env，设置 EXTERNAL_AI_ENABLED=true 并填写 VIVO_APP_ID/VIVO_APP_KEY
+```
+
 ## 三分钟路演脚本
 
 1. 这是“转诊迹”，把散落病历整理为可核验的转院时间轴。
@@ -117,19 +143,3 @@ npm run smoke
 
 
 
-老师指导：
-转院都是为了去最好的医生，又一系列医院又专门的长处，但是有些病症是非常复杂的并发症，如果给那些大牛专家必须要很好的珍惜时间，所以这个可以给他们节省时间。
-
-problem问题需要说明白，可以做一下老人拿病例的照片
-需要讲市场规模
-
-problem solution spotlight 市场规模。。。
-
-市场推进计划，怎么算出来得到这么多钱。讲进入市场策略和这个问题“还一个事财务如何，收入与成本，考虑一下融资需求，要多少钱，投资的成本，需要多少钱，这钱要有多久，需要多久才能盈利赚回来。”
-
-同组的在做什么主题。分工起码有人调查其他作什么，可以借鉴一下其他idea，可以调研一下评委和竞争者
-
-ppt需要交给老师过目一下，把一下关
-
-
-对于ppt，使用前/使用之后的比对

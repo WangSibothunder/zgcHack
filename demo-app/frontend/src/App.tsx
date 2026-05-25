@@ -20,6 +20,7 @@ import {
   getPreConsultSummary,
   getTimeline,
   reviewEvidence,
+  searchEvidence,
 } from "./api";
 import {
   evidenceStatusText,
@@ -32,6 +33,8 @@ import type {
   CaseSummary,
   CaseSummaryV2,
   EvidenceAnchor,
+  EvidenceSearchItem,
+  EvidenceSearchResponse,
   IngestionJob,
   Material,
   ReviewAction,
@@ -68,6 +71,12 @@ export function App() {
   ]);
   const [ingestionJob, setIngestionJob] = useState<IngestionJob | null>(null);
   const [captureMessage, setCaptureMessage] = useState("");
+  const [searchQuestion, setSearchQuestion] = useState("病人最近的材料中是否提到食欲不振？");
+  const [searchResult, setSearchResult] = useState<EvidenceSearchResponse | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [relatedResult, setRelatedResult] = useState<EvidenceSearchResponse | null>(null);
+  const [relatedLoadingKey, setRelatedLoadingKey] = useState("");
 
   useEffect(() => {
     document.title = "转诊迹｜转院病历证据时间轴 Demo";
@@ -146,6 +155,70 @@ export function App() {
       setEvidence({ material, anchor: latestAnchor ?? anchor });
     } finally {
       setIsEvidenceLoading(false);
+    }
+  }
+
+  async function openSearchResult(item: EvidenceSearchItem) {
+    if (!timeline) return;
+    setActiveTab("timeline");
+    setActiveNodeId(item.node_id);
+    window.requestAnimationFrame(() => {
+      document.querySelector(`[data-node-id="${item.node_id}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    });
+    const material = await getMaterial(timeline.case_id, item.material_id);
+    const anchor = material.evidence_anchors.find((candidate) => candidate.anchor_id === item.anchor_id) ?? material.evidence_anchors[0];
+    setEvidence({ material, anchor });
+  }
+
+  async function handleEvidenceQuestion() {
+    if (!selectedCaseId || !searchQuestion.trim()) return;
+    setSearchLoading(true);
+    setSearchError("");
+    try {
+      setSearchResult(
+        await searchEvidence({
+          case_id: selectedCaseId,
+          trigger_type: "question",
+          question: searchQuestion,
+          top_k: 5,
+        }),
+      );
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "证据联查失败。");
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+
+  async function handleRelatedSearch(anchor: EvidenceAnchor) {
+    if (!selectedCaseId) return;
+    setRelatedLoadingKey(anchor.anchor_id);
+    try {
+      setRelatedResult(
+        await searchEvidence({
+          case_id: selectedCaseId,
+          trigger_type: "field",
+          selected_material_id: anchor.material_id,
+          selected_text: anchor.display_value,
+          top_k: 3,
+        }),
+      );
+    } catch (err) {
+      setRelatedResult({
+        query_id: "local-error",
+        case_id: selectedCaseId,
+        answer_mode: "evidence_only",
+        query_display: "相关记录",
+        retrieval_terms: [],
+        result_statement: err instanceof Error ? err.message : "关联记录加载失败。",
+        items: [],
+        not_found_note: "可稍后重试，当前页面不会生成诊断或治疗建议。",
+        llm_mode: "unavailable_fallback",
+        notice: SAFETY_NOTICE,
+        synthetic: true,
+      });
+    } finally {
+      setRelatedLoadingKey("");
     }
   }
 
@@ -278,6 +351,16 @@ export function App() {
           onRetry={() => void loadCaseList()}
           onSelect={setActiveNodeId}
           onOpenEvidence={openEvidence}
+          onOpenSearchResult={openSearchResult}
+          searchQuestion={searchQuestion}
+          searchResult={searchResult}
+          searchLoading={searchLoading}
+          searchError={searchError}
+          onSearchQuestionChange={setSearchQuestion}
+          onSearchQuestion={handleEvidenceQuestion}
+          relatedResult={relatedResult}
+          relatedLoadingKey={relatedLoadingKey}
+          onRelatedSearch={handleRelatedSearch}
           evidenceLoading={isEvidenceLoading}
         />
       )}
@@ -327,6 +410,16 @@ function TimelineWorkspace({
   onRetry,
   onSelect,
   onOpenEvidence,
+  onOpenSearchResult,
+  searchQuestion,
+  searchResult,
+  searchLoading,
+  searchError,
+  onSearchQuestionChange,
+  onSearchQuestion,
+  relatedResult,
+  relatedLoadingKey,
+  onRelatedSearch,
   evidenceLoading,
 }: {
   timeline: TimelineResponse | null;
@@ -343,12 +436,33 @@ function TimelineWorkspace({
   onRetry: () => void;
   onSelect: (nodeId: string) => void;
   onOpenEvidence: (materialId: string, anchor?: EvidenceAnchor) => Promise<void>;
+  onOpenSearchResult: (item: EvidenceSearchItem) => Promise<void>;
+  searchQuestion: string;
+  searchResult: EvidenceSearchResponse | null;
+  searchLoading: boolean;
+  searchError: string;
+  onSearchQuestionChange: (value: string) => void;
+  onSearchQuestion: () => Promise<void>;
+  relatedResult: EvidenceSearchResponse | null;
+  relatedLoadingKey: string;
+  onRelatedSearch: (anchor: EvidenceAnchor) => Promise<void>;
   evidenceLoading: boolean;
 }) {
   return (
     <main className="workspace">
       <section className="main-pane" aria-label="时间轴工作区">
         {timeline && <CaseOverview timeline={timeline} />}
+        {timeline && (
+          <EvidenceSearchPanel
+            question={searchQuestion}
+            result={searchResult}
+            isLoading={searchLoading}
+            error={searchError}
+            onQuestionChange={onSearchQuestionChange}
+            onSearch={onSearchQuestion}
+            onOpenResult={onOpenSearchResult}
+          />
+        )}
         <UploadStrip fileNames={selectedFileNames} status={uploadStatus} onFilesChange={onFilesChange} />
         <FilterBar timeline={timeline} filter={filter} onFilter={onFilter} onRetry={onRetry} />
 
@@ -366,7 +480,16 @@ function TimelineWorkspace({
       </section>
 
       <aside className="detail-pane" aria-label="节点详情与证据追溯">
-        <DetailPanel timeline={timeline} node={activeNode} onOpenEvidence={onOpenEvidence} evidenceLoading={evidenceLoading} />
+        <DetailPanel
+          timeline={timeline}
+          node={activeNode}
+          onOpenEvidence={onOpenEvidence}
+          onOpenSearchResult={onOpenSearchResult}
+          relatedResult={relatedResult}
+          relatedLoadingKey={relatedLoadingKey}
+          onRelatedSearch={onRelatedSearch}
+          evidenceLoading={evidenceLoading}
+        />
       </aside>
     </main>
   );
@@ -391,6 +514,96 @@ function CaseOverview({ timeline }: { timeline: TimelineResponse }) {
         </div>
       ))}
     </section>
+  );
+}
+
+function EvidenceSearchPanel({
+  question,
+  result,
+  isLoading,
+  error,
+  onQuestionChange,
+  onSearch,
+  onOpenResult,
+}: {
+  question: string;
+  result: EvidenceSearchResponse | null;
+  isLoading: boolean;
+  error: string;
+  onQuestionChange: (value: string) => void;
+  onSearch: () => Promise<void>;
+  onOpenResult: (item: EvidenceSearchItem) => Promise<void>;
+}) {
+  return (
+    <section className="evidence-search-panel" aria-label="证据联查">
+      <div className="search-head">
+        <div>
+          <div className="section-kicker">证据联查</div>
+          <h2>基于已上传材料查找相关原文</h2>
+          <p>系统仅查找与归纳已上传材料中的相关证据，不生成诊断或治疗建议。</p>
+        </div>
+        <span className="provider-pill">{result?.llm_mode === "mock" ? "本地检索模式" : result ? "外部 provider 回退" : "待检索"}</span>
+      </div>
+      <div className="search-row">
+        <input
+          value={question}
+          onChange={(event) => onQuestionChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") void onSearch();
+          }}
+          aria-label="输入证据联查问题"
+        />
+        <button className="icon-button primary" type="button" disabled={isLoading || !question.trim()} onClick={() => void onSearch()}>
+          <FileSearch size={17} />
+          {isLoading ? "查找中" : "查找相关记录"}
+        </button>
+      </div>
+      {error && <div className="inline-warning">{error}</div>}
+      {result && (
+        <div className="search-results" aria-live="polite">
+          <div className="result-summary">
+            <strong>{result.result_statement}</strong>
+            <span>{result.retrieval_terms.length ? `检索词：${result.retrieval_terms.join(" / ")}` : result.query_display}</span>
+          </div>
+          {result.not_found_note && <p className="muted-text">{result.not_found_note}</p>}
+          {result.items.map((item) => (
+            <EvidenceResultCard item={item} key={item.segment_id} onOpenResult={onOpenResult} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EvidenceResultCard({
+  item,
+  onOpenResult,
+  compact = false,
+}: {
+  item: EvidenceSearchItem;
+  onOpenResult: (item: EvidenceSearchItem) => Promise<void>;
+  compact?: boolean;
+}) {
+  return (
+    <article className={compact ? "evidence-result compact" : "evidence-result"}>
+      <div className="result-title">
+        <strong>
+          {item.document_date ?? "日期待确认"}｜{item.document_type}
+          {item.department ? `｜${item.department}` : ""}
+        </strong>
+        <span>{item.relevance_label}</span>
+      </div>
+      <p className="source-excerpt">“{item.source_excerpt}”</p>
+      <p>材料归纳：{item.evidence_summary}</p>
+      <div className="result-actions">
+        <small>
+          OCR {Math.round(item.ocr_confidence * 100)}%｜{item.ranking_source === "keyword+mock_rerank" ? "本地检索模式" : "回退检索"}
+        </small>
+        <button className="retry-link" type="button" onClick={() => void onOpenResult(item)}>
+          查看原图证据
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -514,7 +727,11 @@ function TimelineRail({
           const firstMaterial = timeline.materials[node.materials[0]];
           const firstEvidence = node.evidence_anchors[0];
           return (
-            <article className={node.node_id === activeNodeId ? "timeline-node active" : "timeline-node"} key={node.node_id}>
+            <article
+              className={node.node_id === activeNodeId ? "timeline-node active" : "timeline-node"}
+              key={node.node_id}
+              data-node-id={node.node_id}
+            >
               <button className="thumb-button" type="button" onClick={() => void onOpenEvidence(firstMaterial.material_id, firstEvidence)}>
                 <img src={assetUrl(firstMaterial.image_url)} alt={`${firstMaterial.title}缩略图`} />
               </button>
@@ -545,11 +762,19 @@ function DetailPanel({
   timeline,
   node,
   onOpenEvidence,
+  onOpenSearchResult,
+  relatedResult,
+  relatedLoadingKey,
+  onRelatedSearch,
   evidenceLoading,
 }: {
   timeline: TimelineResponse | null;
   node?: TimelineNode;
   onOpenEvidence: (materialId: string, anchor?: EvidenceAnchor) => Promise<void>;
+  onOpenSearchResult: (item: EvidenceSearchItem) => Promise<void>;
+  relatedResult: EvidenceSearchResponse | null;
+  relatedLoadingKey: string;
+  onRelatedSearch: (anchor: EvidenceAnchor) => Promise<void>;
   evidenceLoading: boolean;
 }) {
   if (!timeline || !node) {
@@ -597,6 +822,17 @@ function DetailPanel({
                   {evidenceStatusText(confidence)}｜OCR {Math.round(confidence * 100)}%
                 </em>
               )}
+              {anchor && (
+                <span
+                  className="field-related-link"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void onRelatedSearch(anchor);
+                  }}
+                >
+                  历史关联记录
+                </span>
+              )}
             </button>
           );
         })}
@@ -619,6 +855,26 @@ function DetailPanel({
       <section className="ocr-box">
         <h3>OCR 片段</h3>
         <p>{node.ocr_excerpt}</p>
+        {node.evidence_anchors[0] && (
+          <button
+            className="retry-link related-trigger"
+            type="button"
+            onClick={() => void onRelatedSearch(node.evidence_anchors[0])}
+          >
+            联查相关证据
+          </button>
+        )}
+        {relatedLoadingKey && <span className="loading-inline">正在联查相关记录...</span>}
+        {relatedResult && (
+          <div className="related-records">
+            <strong>关联记录（{relatedResult.items.length}）</strong>
+            <span>{relatedResult.llm_mode === "mock" ? "本地检索模式" : "provider 回退模式"}</span>
+            {relatedResult.items.length === 0 && <p>{relatedResult.not_found_note ?? relatedResult.result_statement}</p>}
+            {relatedResult.items.map((item) => (
+              <EvidenceResultCard item={item} key={`related-${item.segment_id}`} compact onOpenResult={onOpenSearchResult} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="missing-box">
