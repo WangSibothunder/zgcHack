@@ -1,0 +1,260 @@
+{
+  "synthetic": true,
+  "notice": "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。",
+  "case_id": "demo-neuro-transfer-002",
+  "patient": {
+    "display_name": "演示患者 B02",
+    "sex": "女",
+    "age_display": "57 岁"
+  },
+  "transfer": {
+    "origin_hospital": "栖云市医院",
+    "destination_hospital": "澄明医学中心",
+    "destination_department": "神经内科",
+    "reason": "间断肢体麻木，携带外院影像报告待整理",
+    "coverage": "2025-01-06 至 2025-01-11"
+  },
+  "timeline_nodes": [
+    {
+      "node_id": "node-neuro-20250106",
+      "date": "2025-01-06",
+      "hospital_department": "栖云市医院｜急诊科",
+      "document_type": "急诊病历",
+      "headline": "麻木主诉材料",
+      "summary": "记录间断右侧肢体麻木主诉，附检查建议文字。",
+      "tags": [
+        {
+          "label": "首次记录",
+          "level": "info"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-neuro-note1"
+      ],
+      "structured_fields": {
+        "主诉记录": "间断右侧肢体麻木",
+        "材料状态": "待接诊医生核验"
+      },
+      "ocr_excerpt": "合成演示材料｜主诉：间断右侧肢体麻木。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-chief",
+          "material_id": "mat-neuro-note1",
+          "field_key": "主诉记录",
+          "display_value": "间断右侧肢体麻木",
+          "page_or_image": "第 1 张，第 2 行",
+          "locator_text": "主诉",
+          "confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    {
+      "node_id": "node-neuro-20250107",
+      "date": "2025-01-07",
+      "hospital_department": "栖云市医院｜影像科",
+      "document_type": "影像报告",
+      "headline": "头颅 MRI 报告材料",
+      "summary": "影像报告中存在需复核的描述字段。",
+      "tags": [
+        {
+          "label": "影像报告",
+          "level": "info"
+        },
+        {
+          "label": "异常字段待核验",
+          "level": "warning"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": true,
+      "materials": [
+        "mat-neuro-mri"
+      ],
+      "structured_fields": {
+        "检查类型": "头颅 MRI",
+        "报告字段": "局灶异常信号描述（外院原文待核验）"
+      },
+      "ocr_excerpt": "合成演示材料｜MRI 报告：局灶异常信号描述，建议结合临床复核。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-mri",
+          "material_id": "mat-neuro-mri",
+          "field_key": "报告字段",
+          "display_value": "局灶异常信号描述（外院原文待核验）",
+          "page_or_image": "第 1 张，结论栏",
+          "locator_text": "异常信号",
+          "confidence": 0.82,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true
+        }
+      ]
+    },
+    {
+      "node_id": "node-neuro-20250110",
+      "date": "2025-01-10",
+      "hospital_department": "栖云市医院｜神经内科",
+      "document_type": "门诊记录",
+      "headline": "转诊记录材料",
+      "summary": "门诊记录包含转入上级医院复核影像的文字。",
+      "tags": [
+        {
+          "label": "转诊相关",
+          "level": "warning"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-neuro-referral"
+      ],
+      "structured_fields": {
+        "转诊记录": "建议携带影像资料到上级医院复核"
+      },
+      "ocr_excerpt": "合成演示材料｜建议携带影像资料至上级医院复核。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-ref",
+          "material_id": "mat-neuro-referral",
+          "field_key": "转诊记录",
+          "display_value": "建议携带影像资料到上级医院复核",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "建议",
+          "confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    {
+      "node_id": "node-neuro-20250111",
+      "date": "2025-01-11",
+      "hospital_department": "澄明医学中心｜神经内科",
+      "document_type": "转入接收记录",
+      "headline": "转入材料清单",
+      "summary": "系统提示当前材料仅含报告文本，未包含可浏览影像文件。",
+      "tags": [
+        {
+          "label": "材料待补充",
+          "level": "warning"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-neuro-intake"
+      ],
+      "structured_fields": {
+        "材料提示": "未见影像原片文件，仅见报告材料"
+      },
+      "ocr_excerpt": "合成演示材料｜材料提示：未见影像原片文件。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-missing",
+          "material_id": "mat-neuro-intake",
+          "field_key": "材料提示",
+          "display_value": "未见影像原片文件，仅见报告材料",
+          "page_or_image": "第 1 张，清单栏",
+          "locator_text": "材料提示",
+          "confidence": 0.97,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    }
+  ],
+  "materials": {
+    "mat-neuro-note1": {
+      "material_id": "mat-neuro-note1",
+      "title": "合成神经内科材料",
+      "image_url": "/assets/stroke-002/2025-01-06-note.svg",
+      "ocr_text": "合成演示材料｜主诉：间断右侧肢体麻木。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-chief",
+          "material_id": "mat-neuro-note1",
+          "field_key": "主诉记录",
+          "display_value": "间断右侧肢体麻木",
+          "page_or_image": "第 1 张，第 2 行",
+          "locator_text": "主诉",
+          "confidence": 0.92,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    "mat-neuro-mri": {
+      "material_id": "mat-neuro-mri",
+      "title": "合成神经内科材料",
+      "image_url": "/assets/stroke-002/2025-01-07-mri.svg",
+      "ocr_text": "合成演示材料｜MRI 报告：局灶异常信号描述，建议结合临床复核。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-mri",
+          "material_id": "mat-neuro-mri",
+          "field_key": "报告字段",
+          "display_value": "局灶异常信号描述（外院原文待核验）",
+          "page_or_image": "第 1 张，结论栏",
+          "locator_text": "异常信号",
+          "confidence": 0.82,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true
+        }
+      ]
+    },
+    "mat-neuro-referral": {
+      "material_id": "mat-neuro-referral",
+      "title": "合成神经内科材料",
+      "image_url": "/assets/stroke-002/2025-01-10-referral.svg",
+      "ocr_text": "合成演示材料｜建议携带影像资料至上级医院复核。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-ref",
+          "material_id": "mat-neuro-referral",
+          "field_key": "转诊记录",
+          "display_value": "建议携带影像资料到上级医院复核",
+          "page_or_image": "第 1 张，第 6 行",
+          "locator_text": "建议",
+          "confidence": 0.94,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    "mat-neuro-intake": {
+      "material_id": "mat-neuro-intake",
+      "title": "合成神经内科材料",
+      "image_url": "/assets/stroke-002/2025-01-11-intake.svg",
+      "ocr_text": "合成演示材料｜材料提示：未见影像原片文件。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-neuro-missing",
+          "material_id": "mat-neuro-intake",
+          "field_key": "材料提示",
+          "display_value": "未见影像原片文件，仅见报告材料",
+          "page_or_image": "第 1 张，清单栏",
+          "locator_text": "材料提示",
+          "confidence": 0.97,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    }
+  },
+  "available_filters": {
+    "abnormal_only": true,
+    "document_types": [
+      "急诊病历",
+      "影像报告",
+      "门诊记录",
+      "转入接收记录"
+    ],
+    "transfer_related": true
+  },
+  "missing_material_reminders": [
+    "当前合成材料集中未见影像原片文件；该提示仅用于材料整理演示。"
+  ]
+}

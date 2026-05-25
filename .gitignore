@@ -1,0 +1,28 @@
+# secrets and environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# frontend artifacts
+node_modules/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# IDE/OS
+.DS_Store
+.vscode/
+.idea/
+
+# never commit real case imports
+real-data/
+uploads/
+private-records/

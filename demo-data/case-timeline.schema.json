@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SyntheticTransferTimelineCase",
+  "type": "object",
+  "required": [
+    "synthetic",
+    "notice",
+    "case_id",
+    "patient",
+    "transfer",
+    "timeline_nodes",
+    "materials"
+  ],
+  "properties": {
+    "synthetic": {
+      "const": true
+    },
+    "notice": {
+      "type": "string",
+      "minLength": 10
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "timeline_nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "node_id",
+          "date",
+          "materials",
+          "evidence_anchors"
+        ]
+      }
+    },
+    "materials": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "synthetic": true,
+  "notice": "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。",
+  "cases": [
+    {
+      "case_id": "demo-cardiac-transfer-001",
+      "patient_display": "演示患者 A01，男，62 岁",
+      "destination_department": "心内科",
+      "transfer_reason": "反复胸部不适，需进一步核验外院材料",
+      "node_count": 6,
+      "abnormal_flag_count": 4
+    },
+    {
+      "case_id": "demo-neuro-transfer-002",
+      "patient_display": "演示患者 B02，女，57 岁",
+      "destination_department": "神经内科",
+      "transfer_reason": "间断肢体麻木，携带外院影像报告待整理",
+      "node_count": 4,
+      "abnormal_flag_count": 1
+    },
+    {
+      "case_id": "demo-oncology-transfer-003",
+      "patient_display": "演示患者 C03，女，49 岁",
+      "destination_department": "肿瘤科",
+      "transfer_reason": "携带病理与阶段治疗记录转诊复核",
+      "node_count": 4,
+      "abnormal_flag_count": 1
+    }
+  ]
+}

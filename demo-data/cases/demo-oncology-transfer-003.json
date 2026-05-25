@@ -1,0 +1,262 @@
+{
+  "synthetic": true,
+  "notice": "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。",
+  "case_id": "demo-oncology-transfer-003",
+  "patient": {
+    "display_name": "演示患者 C03",
+    "sex": "女",
+    "age_display": "49 岁"
+  },
+  "transfer": {
+    "origin_hospital": "岚州市医院",
+    "destination_hospital": "澄明医学中心",
+    "destination_department": "肿瘤科",
+    "reason": "携带病理与阶段治疗记录转诊复核",
+    "coverage": "2024-10-11 至 2024-11-20"
+  },
+  "timeline_nodes": [
+    {
+      "node_id": "node-onc-20241011",
+      "date": "2024-10-11",
+      "hospital_department": "岚州市医院｜外科",
+      "document_type": "门诊记录",
+      "headline": "外院首份相关记录",
+      "summary": "含检查预约与后续材料整理信息。",
+      "tags": [
+        {
+          "label": "门诊记录",
+          "level": "info"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-onc-note"
+      ],
+      "structured_fields": {
+        "材料类型": "门诊记录",
+        "内容": "安排后续检查"
+      },
+      "ocr_excerpt": "合成演示材料｜安排后续检查。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-note",
+          "material_id": "mat-onc-note",
+          "field_key": "内容",
+          "display_value": "安排后续检查",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "检查",
+          "confidence": 0.91,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    {
+      "node_id": "node-onc-20241018",
+      "date": "2024-10-18",
+      "hospital_department": "岚州市医院｜病理科",
+      "document_type": "病理报告",
+      "headline": "病理报告材料",
+      "summary": "包含病理报告原文摘要，供转入科室核验。",
+      "tags": [
+        {
+          "label": "病理报告",
+          "level": "info"
+        },
+        {
+          "label": "关键材料",
+          "level": "warning"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": true,
+      "materials": [
+        "mat-onc-path"
+      ],
+      "structured_fields": {
+        "报告字段": "病理描述原文摘要（待核验）",
+        "材料状态": "关键材料"
+      },
+      "ocr_excerpt": "合成演示材料｜病理描述原文摘要：示例文本，仅供流程展示。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-path",
+          "material_id": "mat-onc-path",
+          "field_key": "报告字段",
+          "display_value": "病理描述原文摘要（待核验）",
+          "page_or_image": "第 1 张，摘要栏",
+          "locator_text": "病理描述",
+          "confidence": 0.89,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true
+        }
+      ]
+    },
+    {
+      "node_id": "node-onc-20241115",
+      "date": "2024-11-15",
+      "hospital_department": "岚州市医院｜肿瘤科",
+      "document_type": "阶段治疗记录",
+      "headline": "阶段记录材料",
+      "summary": "整理既有阶段记录，不生成疗效评价。",
+      "tags": [
+        {
+          "label": "阶段记录",
+          "level": "info"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-onc-stage"
+      ],
+      "structured_fields": {
+        "记录类型": "阶段治疗记录",
+        "声明": "仅整理原文，不评价疗效"
+      },
+      "ocr_excerpt": "合成演示材料｜阶段治疗记录：示例条目。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-stage",
+          "material_id": "mat-onc-stage",
+          "field_key": "记录类型",
+          "display_value": "阶段治疗记录",
+          "page_or_image": "第 1 张，标题栏",
+          "locator_text": "阶段治疗",
+          "confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    {
+      "node_id": "node-onc-20241120",
+      "date": "2024-11-20",
+      "hospital_department": "澄明医学中心｜肿瘤科",
+      "document_type": "转入接收记录",
+      "headline": "转入材料清单",
+      "summary": "接收页面聚合病理和阶段记录以便核验。",
+      "tags": [
+        {
+          "label": "转入记录",
+          "level": "info"
+        }
+      ],
+      "related_to_transfer_reason": true,
+      "has_abnormal_flag": false,
+      "materials": [
+        "mat-onc-intake"
+      ],
+      "structured_fields": {
+        "材料清单": "病理报告、阶段治疗记录",
+        "接收状态": "待医生核验"
+      },
+      "ocr_excerpt": "合成演示材料｜接收材料：病理报告、阶段记录。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-intake",
+          "material_id": "mat-onc-intake",
+          "field_key": "材料清单",
+          "display_value": "病理报告、阶段治疗记录",
+          "page_or_image": "第 1 张，清单栏",
+          "locator_text": "材料",
+          "confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    }
+  ],
+  "materials": {
+    "mat-onc-note": {
+      "material_id": "mat-onc-note",
+      "title": "合成肿瘤科材料",
+      "image_url": "/assets/oncology-003/2024-10-11-note.svg",
+      "ocr_text": "合成演示材料｜安排后续检查。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-note",
+          "material_id": "mat-onc-note",
+          "field_key": "内容",
+          "display_value": "安排后续检查",
+          "page_or_image": "第 1 张，第 4 行",
+          "locator_text": "检查",
+          "confidence": 0.91,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    "mat-onc-path": {
+      "material_id": "mat-onc-path",
+      "title": "合成肿瘤科材料",
+      "image_url": "/assets/oncology-003/2024-10-18-path.svg",
+      "ocr_text": "合成演示材料｜病理描述原文摘要：示例文本，仅供流程展示。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-path",
+          "material_id": "mat-onc-path",
+          "field_key": "报告字段",
+          "display_value": "病理描述原文摘要（待核验）",
+          "page_or_image": "第 1 张，摘要栏",
+          "locator_text": "病理描述",
+          "confidence": 0.89,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": true
+        }
+      ]
+    },
+    "mat-onc-stage": {
+      "material_id": "mat-onc-stage",
+      "title": "合成肿瘤科材料",
+      "image_url": "/assets/oncology-003/2024-11-15-stage.svg",
+      "ocr_text": "合成演示材料｜阶段治疗记录：示例条目。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-stage",
+          "material_id": "mat-onc-stage",
+          "field_key": "记录类型",
+          "display_value": "阶段治疗记录",
+          "page_or_image": "第 1 张，标题栏",
+          "locator_text": "阶段治疗",
+          "confidence": 0.95,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    },
+    "mat-onc-intake": {
+      "material_id": "mat-onc-intake",
+      "title": "合成肿瘤科材料",
+      "image_url": "/assets/oncology-003/2024-11-20-intake.svg",
+      "ocr_text": "合成演示材料｜接收材料：病理报告、阶段记录。",
+      "evidence_anchors": [
+        {
+          "anchor_id": "ev-onc-intake",
+          "material_id": "mat-onc-intake",
+          "field_key": "材料清单",
+          "display_value": "病理报告、阶段治疗记录",
+          "page_or_image": "第 1 张，清单栏",
+          "locator_text": "材料",
+          "confidence": 0.96,
+          "verification_status": "unreviewed",
+          "is_abnormal_flag": false
+        }
+      ]
+    }
+  },
+  "available_filters": {
+    "abnormal_only": true,
+    "document_types": [
+      "门诊记录",
+      "病理报告",
+      "阶段治疗记录",
+      "转入接收记录"
+    ],
+    "transfer_related": true
+  },
+  "missing_material_reminders": [
+    "当前 Demo 仅展示病理与阶段记录的整理路径，不用于诊疗评价。"
+  ]
+}
