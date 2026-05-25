@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from services.external_ai import get_llm_provider, summarize_from_source
+from providers.provider_registry import get_llm_provider
+from services.external_ai import summarize_from_source
 from services.storage import EVIDENCE_INDEX_DIR, EVIDENCE_QUERIES_DIR, list_json, read_json, write_json
 
 NOTICE = "以上为合成材料中的相关证据归纳，不构成诊断或治疗建议。"
@@ -13,7 +14,7 @@ NOT_FOUND_NOTE = "这仅表示现有材料中未找到相关证据，不代表�
 
 SYNONYMS: dict[str, list[str]] = {
     "食欲不振": ["食欲欠佳", "纳差", "进食减少", "进食量减少", "进食量较前减少"],
-    "胸痛": ["胸部不适", "胸前区疼痛"],
+    "胸痛": ["胸部", "胸部不适", "胸前区疼痛"],
     "转院": ["转上级医院", "转诊", "进一步诊治"],
     "肌钙蛋白": ["cTnI", "TnI", "肌钙蛋白 I"],
 }
@@ -70,6 +71,23 @@ def build_segments(case: dict[str, Any]) -> list[dict[str, Any]]:
                     )
                     segments.append(segment)
             else:
+                if material.get("ocr_text"):
+                    anchor = material_anchors[0] if material_anchors else {}
+                    segments.append(
+                        _segment_from_source(
+                            case_id=case["case_id"],
+                            node=node,
+                            material=material,
+                            hospital=hospital,
+                            department=department,
+                            text=material.get("ocr_text", ""),
+                            ocr_block_ids=anchor.get("ocr_block_ids", []),
+                            bboxes=[anchor["bbox"]] if anchor.get("bbox") else [],
+                            confidence=anchor.get("ocr_confidence") or anchor.get("confidence") or 0,
+                            anchor=anchor,
+                            suffix="ocr-text",
+                        )
+                    )
                 for index, anchor in enumerate(material_anchors, start=1):
                     text = anchor.get("display_value") or anchor.get("locator_text") or material.get("ocr_text", "")
                     segments.append(

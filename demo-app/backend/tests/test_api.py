@@ -239,6 +239,23 @@ def test_v3_appetite_question_recalls_synonym_segments_with_bbox() -> None:
     assert all(item["anchor_id"] for item in payload["items"])
 
 
+def test_v3_cardiac_question_recalls_partial_chest_term() -> None:
+    response = client.post(
+        "/api/v3/demo/evidence-search",
+        json={
+            "case_id": "demo-cardiac-transfer-001",
+            "trigger_type": "question",
+            "question": "胸部",
+            "top_k": 5,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"]
+    assert "胸部不适" in "".join(item["source_excerpt"] for item in payload["items"])
+    assert "胸部" in payload["retrieval_terms"]
+
+
 def test_v3_no_result_uses_safe_boundary_copy() -> None:
     response = client.post(
         "/api/v3/demo/evidence-search",

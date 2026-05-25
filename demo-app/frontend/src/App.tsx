@@ -535,6 +535,14 @@ function CaseOverview({ timeline }: { timeline: TimelineResponse }) {
   );
 }
 
+function providerModeLabel(mode?: string) {
+  if (!mode) return "待检索";
+  if (mode === "mock") return "本地检索模式";
+  if (mode === "unavailable_fallback") return "外部 provider 回退";
+  if (mode.includes("vivo") || mode.includes("chat")) return "LLM 辅助排序";
+  return "证据排序模式";
+}
+
 function EvidenceSearchPanel({
   question,
   result,
@@ -557,7 +565,7 @@ function EvidenceSearchPanel({
           <div className="section-kicker">证据联查</div>
           <p>系统仅查找与归纳已上传材料中的相关证据，不生成诊断或治疗建议。</p>
         </div>
-        <span className="provider-pill">{result?.llm_mode === "mock" ? "本地检索模式" : result ? "外部 provider 回退" : "待检索"}</span>
+        <span className="provider-pill">{providerModeLabel(result?.llm_mode)}</span>
       </div>
       <div className="search-row">
         <input
@@ -948,7 +956,7 @@ function DetailPanel({
         {relatedResult && (
           <div className="related-records">
             <strong>关联记录（{relatedResult.items.length}）</strong>
-            <span>{relatedResult.llm_mode === "mock" ? "本地检索模式" : "provider 回退模式"}</span>
+            <span>{providerModeLabel(relatedResult.llm_mode)}</span>
             {relatedResult.items.length === 0 && <p>{relatedResult.not_found_note ?? relatedResult.result_statement}</p>}
             {relatedResult.items.map((item) => (
               <EvidenceResultCard item={item} key={`related-${item.segment_id}`} compact onOpenResult={onOpenSearchResult} />
