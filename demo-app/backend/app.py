@@ -169,7 +169,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="转诊迹 Synthetic Demo API", version="0.9.0", lifespan=lifespan)
+app = FastAPI(title="历刻 Synthetic Demo API", version="0.9.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -188,7 +188,7 @@ def frontend_index():
     if index_path.exists():
         return FileResponse(index_path)
     return {
-        "service": "转诊迹 Synthetic Demo API",
+        "service": "历刻 Synthetic Demo API",
         "health": "/health",
         "cases": "/api/v1/demo/cases",
         "docs": "/docs",
@@ -197,7 +197,7 @@ def frontend_index():
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "zhuanzhenji-demo-api", "mode": "synthetic-demo"}
+    return {"status": "ok", "service": "like-demo-api", "mode": "synthetic-demo"}
 
 
 @app.get("/api/v1/demo/cases")

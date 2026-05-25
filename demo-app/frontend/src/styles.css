@@ -47,6 +47,34 @@ button {
   border-bottom: 1px solid #d9e2ec;
 }
 
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.brand-logo-panel {
+  display: flex;
+  width: 210px;
+  height: 78px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.55);
+}
+
 .top-tabs {
   display: flex;
   gap: 8px;
@@ -75,6 +103,7 @@ button {
 
 .title-block {
   max-width: 760px;
+  min-width: 0;
 }
 
 .eyebrow,
@@ -1405,6 +1434,15 @@ label:focus-within {
     display: grid;
   }
 
+  .brand-lockup {
+    align-items: flex-start;
+  }
+
+  .brand-logo-panel {
+    width: 156px;
+    height: 62px;
+  }
+
   .header-actions {
     grid-template-columns: 1fr;
   }
@@ -1459,5 +1497,16 @@ label:focus-within {
     grid-column: 2;
     grid-row: auto;
     justify-self: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand-lockup {
+    display: grid;
+    gap: 12px;
+  }
+
+  .brand-logo-panel {
+    width: min(210px, 100%);
   }
 }

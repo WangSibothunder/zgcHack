@@ -5,7 +5,7 @@ test("loads cardiac timeline, filters nodes, opens evidence, and completes uploa
   await page.request.post("http://127.0.0.1:8000/api/v2/demo/runtime/reset");
   await page.goto("/");
 
-  await expect(page.getByText("转诊迹")).toBeVisible();
+  await expect(page.getByText("历刻")).toBeVisible();
   await expect(page.getByText("把散落病历，连成可核验的转院时间轴。")).toBeVisible();
   await expect(page.getByText("合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。").first()).toBeVisible();
   await expect(page.getByRole("button", { name: /首次胸部不适就诊材料/ })).toBeVisible();
@@ -61,6 +61,6 @@ test("processes synthetic image upload, renders bbox evidence, reviews it, and u
   await page.getByLabel("关闭证据视图").click();
 
   await page.getByRole("button", { name: "接诊前摘要" }).click();
-  await expect(page.getByText("转诊迹｜合成演示接诊前整理摘要")).toBeVisible();
+  await expect(page.getByText("历刻｜合成演示接诊前整理摘要")).toBeVisible();
   await expect(page.getByText("1 份")).toBeVisible();
 });

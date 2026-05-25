@@ -31,7 +31,7 @@ for req_style in ["request_id", "requestId"]:
         "messages": [
             {
                 "role": "system",
-                "content": "你是转诊迹证据排序模块，仅处理合成演示病历。返回JSON {\"items\":[{\"segment_id\":\"...\",\"relevance_level\":\"...\",\"evidence_summary\":\"...\"}]}",
+                "content": "你是历刻证据排序模块，仅处理合成演示病历。返回JSON {\"items\":[{\"segment_id\":\"...\",\"relevance_level\":\"...\",\"evidence_summary\":\"...\"}]}",
             },
             {
                 "role": "user",

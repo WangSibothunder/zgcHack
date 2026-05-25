@@ -75,7 +75,7 @@ export function App() {
   const [relatedLoadingKey, setRelatedLoadingKey] = useState("");
 
   useEffect(() => {
-    document.title = "转诊迹｜转院病历证据时间轴 Demo";
+    document.title = "历刻｜转院病历重建系统 Demo";
     void loadCaseList();
   }, []);
 
@@ -266,13 +266,18 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="title-block">
-          <p className="eyebrow">转诊迹</p>
-          <h1>转院病历证据时间轴</h1>
-          <p className="subtitle">把散落病历，连成可核验的转院时间轴。</p>
-          <div className="notice" role="note">
-            <AlertTriangle size={16} />
-            <span>{notice}</span>
+        <div className="brand-lockup">
+          <div className="brand-logo-panel" aria-hidden="true">
+            <img className="brand-logo" src={assetUrl("/assets/logo.png")} alt="" />
+          </div>
+          <div className="title-block">
+            <p className="eyebrow">历刻</p>
+            <h1>转院病历重建系统</h1>
+            <p className="subtitle">把散落病历，连成可核验的转院时间轴。</p>
+            <div className="notice" role="note">
+              <AlertTriangle size={16} />
+              <span>{notice}</span>
+            </div>
           </div>
         </div>
 
@@ -314,7 +319,7 @@ export function App() {
         </div>
       </header>
 
-      <nav className="top-tabs" aria-label="转诊迹工作区">
+      <nav className="top-tabs" aria-label="历刻工作区">
         <TabButton active={activeTab === "timeline"} onClick={() => setActiveTab("timeline")} icon={<FileSearch size={17} />}>
           医生时间轴
         </TabButton>
@@ -1142,7 +1147,7 @@ function PreConsultSummary({ summary, onRefresh }: { summary: CaseSummaryV2 | nu
       <section className="summary-page">
         <div className="panel-heading">
           <span>接诊前摘要</span>
-          <h2>转诊迹｜合成演示接诊前整理摘要</h2>
+          <h2>历刻｜合成演示接诊前整理摘要</h2>
           <p>{summary.boundary}</p>
         </div>
         <div className="summary-grid">

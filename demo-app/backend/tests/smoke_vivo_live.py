@@ -141,7 +141,7 @@ for req_style in ["request_id", "requestId"]:
             {
                 "role": "system",
                 "content": (
-                    "你是'转诊迹'中的证据联查排序模块，仅处理合成演示病历文本。"
+                    "你是'历刻'中的证据联查排序模块，仅处理合成演示病历文本。"
                     "从给定 candidate_segments 中筛选与医生查询直接相关的片段。"
                     "返回 JSON: {\"items\": [...]}"
                 ),
