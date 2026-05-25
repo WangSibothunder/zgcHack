@@ -271,17 +271,17 @@ export function App() {
             <img className="brand-logo" src={assetUrl("/assets/logo.png")} alt="" />
           </div>
           <div className="title-block">
-            <p className="eyebrow">历刻</p>
-            <h1>转院病历重建系统</h1>
+            <h1 className="sr-only">历刻</h1>
+            <p className="brand-slogan">让天下没有难看的病</p>
             <p className="subtitle">把散落病历，连成可核验的转院时间轴。</p>
-            <div className="notice" role="note">
-              <AlertTriangle size={16} />
-              <span>{notice}</span>
-            </div>
           </div>
         </div>
 
         <div className="header-actions">
+          <div className="safety-badge" role="note" title={notice}>
+            <AlertTriangle size={14} />
+            <span>合成演示｜非诊断</span>
+          </div>
           <label className="control-label" htmlFor="case-select">
             演示病例
           </label>

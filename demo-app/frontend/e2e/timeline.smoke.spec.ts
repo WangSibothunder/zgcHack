@@ -5,9 +5,9 @@ test("loads cardiac timeline, filters nodes, opens evidence, and completes uploa
   await page.request.post("http://127.0.0.1:8000/api/v2/demo/runtime/reset");
   await page.goto("/");
 
-  await expect(page.getByText("历刻")).toBeVisible();
+  await expect(page.getByText("让天下没有难看的病")).toBeVisible();
   await expect(page.getByText("把散落病历，连成可核验的转院时间轴。")).toBeVisible();
-  await expect(page.getByText("合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。").first()).toBeVisible();
+  await expect(page.getByText("合成演示｜非诊断")).toBeVisible();
   await expect(page.getByRole("button", { name: /首次胸部不适就诊材料/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "2024-03-12" })).toBeVisible();
   await expect(page.getByRole("button", { name: "2025-01-16" })).toBeVisible();

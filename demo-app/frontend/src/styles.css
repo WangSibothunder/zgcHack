@@ -50,14 +50,14 @@ button {
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 22px;
   min-width: 0;
 }
 
 .brand-logo-panel {
   display: flex;
-  width: 210px;
-  height: 78px;
+  width: 360px;
+  height: 122px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -70,9 +70,8 @@ button {
 .brand-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
-  transform: scale(1.55);
 }
 
 .top-tabs {
@@ -104,6 +103,24 @@ button {
 .title-block {
   max-width: 760px;
   min-width: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.brand-slogan {
+  color: #0f766e;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.15;
 }
 
 .eyebrow,
@@ -145,6 +162,22 @@ h1 {
   color: #075985;
   font-size: 13px;
   font-weight: 700;
+}
+
+.safety-badge {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  justify-self: end;
+  padding: 5px 9px;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .header-actions {
@@ -1439,8 +1472,8 @@ label:focus-within {
   }
 
   .brand-logo-panel {
-    width: 156px;
-    height: 62px;
+    width: 280px;
+    height: 96px;
   }
 
   .header-actions {
@@ -1507,6 +1540,10 @@ label:focus-within {
   }
 
   .brand-logo-panel {
-    width: min(210px, 100%);
+    width: min(320px, 100%);
+  }
+
+  .brand-slogan {
+    font-size: 24px;
   }
 }
