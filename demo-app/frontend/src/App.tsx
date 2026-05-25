@@ -64,11 +64,7 @@ export function App() {
   const [error, setError] = useState("");
   const [evidence, setEvidence] = useState<EvidenceSelection | null>(null);
   const [isEvidenceLoading, setIsEvidenceLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState("等待选择合成演示材料");
-  const [selectedFileNames, setSelectedFileNames] = useState<string[]>([
-    "合成转院材料-1.pdf",
-    "合成检验截图-2.jpg",
-  ]);
+  const selectedFileNames = ["合成转院材料-1.pdf", "合成检验截图-2.jpg"];
   const [ingestionJob, setIngestionJob] = useState<IngestionJob | null>(null);
   const [captureMessage, setCaptureMessage] = useState("");
   const [searchQuestion, setSearchQuestion] = useState("病人最近的材料中是否提到食欲不振？");
@@ -241,15 +237,13 @@ export function App() {
 
   async function handleUpload() {
     if (!selectedCaseId) return;
-    setUploadStatus("正在创建合成处理任务...");
     try {
       const job = await createUploadJob(selectedCaseId, selectedFileNames);
-      setUploadStatus(`任务 ${job.job_id} 已创建，正在读取任务状态...`);
       const completed = await getJob(job.job_id);
-      setUploadStatus(`${completed.message} 已进入 ${completed.generated_case_id}`);
       await loadTimeline(completed.generated_case_id);
+      setCaptureMessage(`${completed.message} 已进入 ${completed.generated_case_id}`);
     } catch (err) {
-      setUploadStatus(err instanceof Error ? `上传模拟失败：${err.message}` : "上传模拟失败。");
+      setCaptureMessage(err instanceof Error ? `上传模拟失败：${err.message}` : "上传模拟失败。");
     }
   }
 
@@ -298,7 +292,22 @@ export function App() {
               </option>
             ))}
           </select>
-          <button className="icon-button primary" type="button" onClick={() => void handleUpload()}>
+          <button className="icon-button primary" type="button" onClick={() => setActiveTab("capture")}>
+            <Upload size={17} />
+            采集材料
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={() => {
+              setActiveTab("summary");
+              void refreshSummary();
+            }}
+          >
+            <ClipboardList size={17} />
+            摘要
+          </button>
+          <button className="icon-button subtle-action" type="button" onClick={() => void handleUpload()}>
             <Upload size={17} />
             模拟上传
           </button>
@@ -344,9 +353,7 @@ export function App() {
           filter={filter}
           isLoading={isLoading}
           error={error}
-          uploadStatus={uploadStatus}
-          selectedFileNames={selectedFileNames}
-          onFilesChange={setSelectedFileNames}
+          uploadMessage={captureMessage}
           onFilter={setFilter}
           onRetry={() => void loadCaseList()}
           onSelect={setActiveNodeId}
@@ -403,9 +410,7 @@ function TimelineWorkspace({
   filter,
   isLoading,
   error,
-  uploadStatus,
-  selectedFileNames,
-  onFilesChange,
+  uploadMessage,
   onFilter,
   onRetry,
   onSelect,
@@ -429,9 +434,7 @@ function TimelineWorkspace({
   filter: NodeFilter;
   isLoading: boolean;
   error: string;
-  uploadStatus: string;
-  selectedFileNames: string[];
-  onFilesChange: (names: string[]) => void;
+  uploadMessage: string;
   onFilter: (filter: NodeFilter) => void;
   onRetry: () => void;
   onSelect: (nodeId: string) => void;
@@ -460,22 +463,24 @@ function TimelineWorkspace({
             error={searchError}
             onQuestionChange={onSearchQuestionChange}
             onSearch={onSearchQuestion}
-            onOpenResult={onOpenSearchResult}
           />
         )}
-        <UploadStrip fileNames={selectedFileNames} status={uploadStatus} onFilesChange={onFilesChange} />
         <FilterBar timeline={timeline} filter={filter} onFilter={onFilter} onRetry={onRetry} />
+        {uploadMessage && <div className="inline-success">{uploadMessage}</div>}
 
         {isLoading && <LoadingState />}
         {!isLoading && error && <ErrorState message={error} onRetry={onRetry} />}
         {!isLoading && !error && timeline && (
-          <TimelineRail
-            timeline={timeline}
-            nodes={filteredNodes}
-            activeNodeId={activeNodeId}
-            onSelect={onSelect}
-            onOpenEvidence={onOpenEvidence}
-          />
+          <>
+            <TimelineRail
+              timeline={timeline}
+              nodes={filteredNodes}
+              activeNodeId={activeNodeId}
+              onSelect={onSelect}
+              onOpenEvidence={onOpenEvidence}
+            />
+            {searchResult && <EvidenceSearchResults result={searchResult} onOpenResult={onOpenSearchResult} />}
+          </>
         )}
       </section>
 
@@ -498,21 +503,29 @@ function TimelineWorkspace({
 function CaseOverview({ timeline }: { timeline: TimelineResponse }) {
   const abnormalCount = timeline.timeline_nodes.filter((node) => node.has_abnormal_flag).length;
   const liveCount = Object.values(timeline.materials).filter((material) => material.processing_source === "现场合成材料处理").length;
-  const items = [
-    ["患者", `${timeline.patient.display_name}，${timeline.patient.sex}，${timeline.patient.age_display}`],
-    ["转院路径", `${timeline.transfer.origin_hospital} → ${timeline.transfer.destination_hospital}`],
-    ["目标科室", timeline.transfer.destination_department],
-    ["材料覆盖", `${timeline.transfer.coverage}｜${timeline.timeline_nodes.length} 个节点`],
-    ["现场材料", `${liveCount} 份现场合成材料｜${abnormalCount} 个节点含标记字段`],
-  ];
   return (
     <section className="case-overview" aria-label="转院摘要">
-      {items.map(([label, value]) => (
-        <div className="summary-tile" key={label}>
-          <span>{label}</span>
-          <strong>{value}</strong>
+      <div className="patient-identity">
+        <span>当前病例</span>
+        <strong>{timeline.patient.display_name}</strong>
+        <small>{timeline.patient.sex}，{timeline.patient.age_display}</small>
+      </div>
+      <div className="transfer-context">
+        <div>
+          <span>转院路径</span>
+          <strong>{timeline.transfer.origin_hospital} → {timeline.transfer.destination_hospital}</strong>
         </div>
-      ))}
+        <div>
+          <span>目标科室</span>
+          <strong>{timeline.transfer.destination_department}</strong>
+        </div>
+        <div className="overview-status">
+          <span>材料覆盖：{timeline.transfer.coverage}</span>
+          <span>{timeline.timeline_nodes.length} 个节点</span>
+          <span>待核验字段 {abnormalCount} 项</span>
+          <span>现场新增 {liveCount} 份</span>
+        </div>
+      </div>
     </section>
   );
 }
@@ -524,7 +537,6 @@ function EvidenceSearchPanel({
   error,
   onQuestionChange,
   onSearch,
-  onOpenResult,
 }: {
   question: string;
   result: EvidenceSearchResponse | null;
@@ -532,14 +544,12 @@ function EvidenceSearchPanel({
   error: string;
   onQuestionChange: (value: string) => void;
   onSearch: () => Promise<void>;
-  onOpenResult: (item: EvidenceSearchItem) => Promise<void>;
 }) {
   return (
     <section className="evidence-search-panel" aria-label="证据联查">
       <div className="search-head">
         <div>
           <div className="section-kicker">证据联查</div>
-          <h2>基于已上传材料查找相关原文</h2>
           <p>系统仅查找与归纳已上传材料中的相关证据，不生成诊断或治疗建议。</p>
         </div>
         <span className="provider-pill">{result?.llm_mode === "mock" ? "本地检索模式" : result ? "外部 provider 回退" : "待检索"}</span>
@@ -559,18 +569,32 @@ function EvidenceSearchPanel({
         </button>
       </div>
       {error && <div className="inline-warning">{error}</div>}
-      {result && (
-        <div className="search-results" aria-live="polite">
-          <div className="result-summary">
-            <strong>{result.result_statement}</strong>
-            <span>{result.retrieval_terms.length ? `检索词：${result.retrieval_terms.join(" / ")}` : result.query_display}</span>
-          </div>
-          {result.not_found_note && <p className="muted-text">{result.not_found_note}</p>}
-          {result.items.map((item) => (
-            <EvidenceResultCard item={item} key={item.segment_id} onOpenResult={onOpenResult} />
-          ))}
+      {result && <p className="search-inline-result">{result.result_statement}</p>}
+    </section>
+  );
+}
+
+function EvidenceSearchResults({
+  result,
+  onOpenResult,
+}: {
+  result: EvidenceSearchResponse;
+  onOpenResult: (item: EvidenceSearchItem) => Promise<void>;
+}) {
+  return (
+    <section className="search-results" aria-live="polite">
+      <div className="result-summary">
+        <div>
+          <span>证据联查结果</span>
+          <strong>{result.result_statement}</strong>
         </div>
-      )}
+        <small>{result.retrieval_terms.length ? `检索词：${result.retrieval_terms.join(" / ")}` : result.query_display}</small>
+      </div>
+      <p className="muted-text">{result.notice}</p>
+      {result.not_found_note && <p className="muted-text">{result.not_found_note}</p>}
+      {result.items.map((item) => (
+        <EvidenceResultCard item={item} key={item.segment_id} onOpenResult={onOpenResult} />
+      ))}
     </section>
   );
 }
@@ -604,41 +628,6 @@ function EvidenceResultCard({
         </button>
       </div>
     </article>
-  );
-}
-
-function UploadStrip({
-  fileNames,
-  status,
-  onFilesChange,
-}: {
-  fileNames: string[];
-  status: string;
-  onFilesChange: (names: string[]) => void;
-}) {
-  return (
-    <section className="upload-strip" aria-label="模拟上传处理">
-      <div>
-        <div className="section-kicker">兼容演示上传</div>
-        <p>旧版 fixture 流程仍保留；真实字节上传请使用“采集新材料”。</p>
-      </div>
-      <label className="file-picker">
-        <FileSearch size={17} />
-        选择演示文件名
-        <input
-          type="file"
-          multiple
-          onChange={(event) => {
-            const names = Array.from(event.target.files ?? []).map((file) => file.name);
-            onFilesChange(names.length ? names : ["合成转院材料-1.pdf"]);
-          }}
-        />
-      </label>
-      <div className="upload-meta">
-        <span>{fileNames.join("、")}</span>
-        <strong>{status}</strong>
-      </div>
-    </section>
   );
 }
 
@@ -722,27 +711,68 @@ function TimelineRail({
   }
   return (
     <section className="timeline-wrap" aria-label="横向病历时间轴">
+      <div className="timeline-section-head">
+        <div>
+          <h2>病程时间轴</h2>
+          <p>{nodes.length} 个时间节点 · 选择节点查看事件说明、证据链与原始材料</p>
+        </div>
+        <span>横向浏览完整时间线</span>
+      </div>
+      <div className="timeline-axis" aria-label="日期轴">
+        {nodes.map((node) => (
+          <button
+            className={node.node_id === activeNodeId ? "axis-date active" : "axis-date"}
+            type="button"
+            key={`axis-${node.node_id}`}
+            onClick={() => onSelect(node.node_id)}
+            aria-pressed={node.node_id === activeNodeId}
+            aria-label={node.date}
+          >
+            <span className={node.has_abnormal_flag ? "axis-dot warning-dot" : "axis-dot"} />
+            <span>{node.date}</span>
+            {node.node_id === activeNodeId && <em aria-hidden="true">当前选中</em>}
+          </button>
+        ))}
+      </div>
       <div className="timeline-rail">
         {nodes.map((node) => {
-          const firstMaterial = timeline.materials[node.materials[0]];
           const firstEvidence = node.evidence_anchors[0];
+          const materials = node.materials.map((id) => timeline.materials[id]).filter(Boolean);
           return (
             <article
               className={node.node_id === activeNodeId ? "timeline-node active" : "timeline-node"}
               key={node.node_id}
               data-node-id={node.node_id}
             >
-              <button className="thumb-button" type="button" onClick={() => void onOpenEvidence(firstMaterial.material_id, firstEvidence)}>
-                <img src={assetUrl(firstMaterial.image_url)} alt={`${firstMaterial.title}缩略图`} />
-              </button>
-              <button className="node-date" type="button" onClick={() => onSelect(node.node_id)} aria-pressed={node.node_id === activeNodeId}>
-                <span className="axis-dot" />
-                <span>{node.date}</span>
-              </button>
-              <button className="node-card" type="button" onClick={() => onSelect(node.node_id)}>
+              <button className="node-card" type="button" onClick={() => onSelect(node.node_id)} aria-label={node.headline}>
+                <span className="node-meta">
+                  <span>{node.date}</span>
+                  <span>{node.node_id === activeNodeId ? "当前选中" : node.document_type}</span>
+                </span>
                 <strong>{node.headline}</strong>
-                <span>{node.summary}</span>
-                <span className="tag-row">
+                <span className="node-summary">{node.summary}</span>
+                <span className="evidence-preview">
+                  <span>证据链</span>
+                  <strong>{firstEvidence?.display_value ?? "暂无已抽取关键字段"}</strong>
+                  <em>{firstEvidence ? verificationStatusLabel(firstEvidence.verification_status).replace("已核验", "已确认") : "待补充"}</em>
+                </span>
+                {firstEvidence && (
+                  <span className="source-note">
+                    <span>材料原文记载</span>
+                    <strong>“{firstEvidence.display_value}”</strong>
+                  </span>
+                )}
+                <span className="material-links">
+                  <span>原始材料</span>
+                  <strong>{materials.map((material) => material.title.replace("合成", "")).join(" · ")}</strong>
+                  <span className="material-open" onClick={(event) => {
+                    event.stopPropagation();
+                    void onOpenEvidence(materials[0]?.material_id ?? node.materials[0], firstEvidence);
+                  }}>
+                    查看 →
+                  </span>
+                </span>
+                <span className="tag-row" aria-label="节点标签">
                   {node.tags.map((tag) => (
                     <span className={`tag ${tag.level}`} key={`${node.node_id}-${tag.label}`}>
                       {tag.label}
@@ -782,6 +812,7 @@ function DetailPanel({
   }
   const materials = node.materials.map((id) => timeline.materials[id]).filter(Boolean);
   const evidenceByField = new Map(node.evidence_anchors.map((anchor) => [anchor.field_key, anchor]));
+  const primaryAnchor = node.evidence_anchors[0];
   return (
     <div className="detail-content">
       <div className="detail-head">
@@ -790,21 +821,60 @@ function DetailPanel({
         <p>{node.hospital_department}｜{node.document_type}</p>
       </div>
 
-      <div className="material-stack">
-        {materials.map((material) => (
-          <button
-            className="material-preview"
-            type="button"
-            key={material.material_id}
-            onClick={() => void onOpenEvidence(material.material_id, material.evidence_anchors[0])}
+      <section className="event-section">
+        <h3>事件说明</h3>
+        <p>{node.summary}</p>
+      </section>
+
+      <section className="evidence-list" aria-label="证据链">
+        <div className="section-title-row">
+          <h3>证据链</h3>
+          <span>{node.evidence_anchors.length} 项</span>
+        </div>
+        {node.evidence_anchors.map((anchor) => (
+          <div
+            className="evidence-item"
+            key={anchor.anchor_id}
+            role="button"
+            tabIndex={0}
+            onClick={() => void onOpenEvidence(anchor.material_id, anchor)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") void onOpenEvidence(anchor.material_id, anchor);
+            }}
           >
-            <img src={assetUrl(material.image_url)} alt={`${material.title}预览`} />
-            <span>{material.title}</span>
-          </button>
+            <FileSearch size={16} />
+            <span>{anchor.display_value}</span>
+            <small>
+              {anchor.bbox ? "原图 bbox 高亮" : "仅材料页定位"}｜{verificationStatusLabel(anchor.verification_status)}｜OCR {Math.round((anchor.ocr_confidence ?? anchor.confidence) * 100)}%
+            </small>
+            <button
+              className="retry-link"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void onOpenEvidence(anchor.material_id, anchor);
+              }}
+            >
+              查看原图证据
+            </button>
+          </div>
         ))}
-      </div>
+        {evidenceLoading && <span className="loading-inline">正在打开证据材料...</span>}
+      </section>
+
+      {primaryAnchor && (
+        <section className="source-record-box">
+          <h3>材料原文记载</h3>
+          <p>“{primaryAnchor.display_value}”</p>
+          <span>来源：{primaryAnchor.field_key}，仅展示原材料中已有文字。</span>
+        </section>
+      )}
 
       <section className="field-list" aria-label="结构化字段">
+        <div className="section-title-row">
+          <h3>结构化字段</h3>
+          <span>点击字段核验证据</span>
+        </div>
         {Object.entries(node.structured_fields).map(([key, value]) => {
           const anchor = evidenceByField.get(key);
           const confidence = anchor?.ocr_confidence ?? anchor?.confidence;
@@ -838,18 +908,23 @@ function DetailPanel({
         })}
       </section>
 
-      <section className="evidence-list" aria-label="证据定位">
-        <h3>证据追溯</h3>
-        {node.evidence_anchors.map((anchor) => (
-          <button className="evidence-item" type="button" key={anchor.anchor_id} onClick={() => void onOpenEvidence(anchor.material_id, anchor)}>
+      <section className="material-stack">
+        <div className="section-title-row">
+          <h3>原始材料</h3>
+          <span>{materials.length} 份</span>
+        </div>
+        {materials.map((material) => (
+          <button
+            className="material-link-row"
+            type="button"
+            key={material.material_id}
+            onClick={() => void onOpenEvidence(material.material_id, material.evidence_anchors[0])}
+          >
             <FileSearch size={16} />
-            <span>{anchor.display_value}</span>
-            <small>
-              {anchor.bbox ? "原图 bbox 高亮" : "旧版定位说明"}｜{verificationStatusLabel(anchor.verification_status)}
-            </small>
+            <span>{material.title}</span>
+            <strong>查看 →</strong>
           </button>
         ))}
-        {evidenceLoading && <span className="loading-inline">正在打开证据材料...</span>}
       </section>
 
       <section className="ocr-box">
