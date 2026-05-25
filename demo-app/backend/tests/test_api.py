@@ -174,6 +174,19 @@ def test_v2_clear_sample_generates_timeline_material_and_bbox_evidence() -> None
     ).json()
     assert material["ocr_mode"] == "deterministic_synthetic"
     assert material["quality"]["status"] == "pass"
+    asset_response = client.get(material["image_url"])
+    assert asset_response.status_code == 200
+    assert asset_response.content.startswith(b"\x89PNG")
+
+
+def test_v2_rejects_fake_image_bytes() -> None:
+    response = client.post(
+        "/api/v2/demo/ingestions",
+        data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "true"},
+        files={"files": ("fake.png", b"not-a-real-image", "image/png")},
+    )
+    assert response.status_code == 400
+    assert "图片内容不匹配" in response.json()["detail"]
 
 
 def test_v2_review_persists_and_summary_counts_update() -> None:

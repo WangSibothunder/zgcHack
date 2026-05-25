@@ -1284,8 +1284,10 @@ function EvidenceModal({
 function EvidenceCanvas({ material, anchor }: { material: Material; anchor?: EvidenceAnchor }) {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [box, setBox] = useState<CSSProperties | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
 
   function updateBox() {
+    setImageFailed(false);
     const image = imageRef.current;
     if (!image || !anchor?.bbox || !image.naturalWidth || !image.naturalHeight) {
       setBox(null);
@@ -1302,13 +1304,33 @@ function EvidenceCanvas({ material, anchor }: { material: Material; anchor?: Evi
 
   return (
     <div className="source-image-wrap">
-      <img ref={imageRef} src={assetUrl(material.image_url)} alt={`${material.title}合成原始材料`} onLoad={updateBox} />
-      {box ? (
-        <div className="bbox-highlight" style={box}>
-          {anchor?.field_key}
+      {imageFailed ? (
+        <div className="image-fallback" role="note">
+          <strong>原图暂不可预览</strong>
+          <span>可能是上传文件不是有效图片，或部署重启后 runtime 原图已清空。</span>
+          <p>{material.ocr_text}</p>
+          {anchor && <div className="locator-highlight inline">定位：{anchor.locator_text}</div>}
         </div>
       ) : (
-        anchor && <div className="locator-highlight">定位：{anchor.locator_text}</div>
+        <>
+          <img
+            ref={imageRef}
+            src={assetUrl(material.image_url)}
+            alt={`${material.title}合成原始材料`}
+            onLoad={updateBox}
+            onError={() => {
+              setImageFailed(true);
+              setBox(null);
+            }}
+          />
+          {box ? (
+            <div className="bbox-highlight" style={box}>
+              {anchor?.field_key}
+            </div>
+          ) : (
+            anchor && <div className="locator-highlight">定位：{anchor.locator_text}</div>
+          )}
+        </>
       )}
     </div>
   );

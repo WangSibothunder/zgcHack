@@ -12,6 +12,8 @@ def validate_upload_name_and_size(filename: str, content: bytes) -> None:
         raise ValueError("仅支持 .png、.jpg、.jpeg 合成演示材料。")
     if len(content) > MAX_UPLOAD_BYTES:
         raise ValueError("单个文件不能超过 10 MB。")
+    if not _has_matching_image_signature(suffix, content):
+        raise ValueError("文件扩展名与图片内容不匹配，请上传真实 PNG/JPG 合成材料。")
 
 
 def evaluate_quality(filename: str, content: bytes) -> dict[str, object]:
@@ -51,3 +53,11 @@ def evaluate_quality(filename: str, content: bytes) -> dict[str, object]:
         "glare_ratio": 0.012,
         "messages": ["图片质量通过，进入 OCR 与字段抽取流程。"],
     }
+
+
+def _has_matching_image_signature(suffix: str, content: bytes) -> bool:
+    if suffix == ".png":
+        return content.startswith(b"\x89PNG\r\n\x1a\n")
+    if suffix in {".jpg", ".jpeg"}:
+        return content.startswith(b"\xff\xd8\xff")
+    return False

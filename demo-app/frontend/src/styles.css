@@ -1335,6 +1335,35 @@ select {
   font-weight: 850;
 }
 
+.locator-highlight.inline {
+  position: static;
+  display: inline-flex;
+  width: fit-content;
+}
+
+.image-fallback {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+  align-content: center;
+  padding: 28px;
+  color: #475569;
+}
+
+.image-fallback strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.image-fallback p {
+  padding: 12px;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  line-height: 1.6;
+}
+
 .bbox-highlight {
   position: absolute;
   display: flex;
