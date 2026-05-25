@@ -26,3 +26,9 @@ test-results/
 real-data/
 uploads/
 private-records/
+runtime/
+demo-app/backend/runtime/
+*.sqlite
+*.sqlite3
+*.db
+*.log

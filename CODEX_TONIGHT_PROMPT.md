@@ -57,9 +57,9 @@ Demo 阶段只能使用 `demo-data/` 中的合成数据，绝不处理或提交�
 - 对照 `docs/DEMO_ACCEPTANCE.md`，凡是未通过项立刻继续实现与修复，不能以 TODO 收尾。
 - 检查没有 token、`.env`、真实病例或个人信息被跟踪。
 
-### 5. 完成后建立 GitHub 仓库并推送
+### 5. 完成后推送到 GitHub public 仓库
 
-全部验收完成后，创建私有 GitHub 仓库 `zgcHack` 并上传当前成果。优先使用 GitHub CLI：
+全部验收完成后，推送到现有公开 GitHub 仓库 `WangSibothunder/zgcHack`。该仓库用于黑客松作品展示，保持 public；前提是完成 public 安全扫描，确认没有真实病历、密钥、`.env`、runtime 上传文件、数据库运行文件或日志。优先使用 GitHub CLI：
 
 ```bash
 gh auth status
@@ -67,10 +67,11 @@ git status --short
 git add .
 git commit -m "feat: deliver synthetic transfer timeline demo"
 git branch -M main
-gh repo create zgcHack --private --source=. --remote=origin --push
+git remote add origin git@github.com:WangSibothunder/zgcHack.git  # 若尚未设置 origin
+git push -u origin main
 ```
 
-若仓库已经初始化或已有提交历史，请保留历史并只提交当前必要变更。若 `gh auth status` 表明未授权，不得声称推送成功：完成本地所有验收后，明确报告需要我执行的唯一授权步骤和待重试的推送命令。
+若仓库已经初始化或已有提交历史，请保留历史并只提交当前必要变更。若 `gh auth status` 表明未授权或缺少 GitHub CLI，不得声称推送成功：完成本地所有验收后，明确报告需要我执行的唯一授权步骤和待重试的推送命令。
 
 ## 最终输出格式
 
@@ -81,4 +82,4 @@ gh repo create zgcHack --private --source=. --remote=origin --push
 3. 实际运行和测试命令及结果；
 4. Demo 演示步骤；
 5. synthetic-only 与非诊断边界确认；
-6. GitHub `zgcHack` 创建和 push 的实际结果，或唯一剩余的认证阻塞。
+6. GitHub public 仓库 `WangSibothunder/zgcHack` push 的实际结果，或唯一剩余的认证/工具阻塞。

@@ -1,0 +1,24 @@
+{
+  "ocr_mode": "deterministic_synthetic",
+  "blocks": [
+    {
+      "block_id": "ocr-discharge-date",
+      "text": "出院日期：2025-01-18",
+      "bbox": [84, 122, 430, 160],
+      "confidence": 0.95
+    },
+    {
+      "block_id": "ocr-discharge-material",
+      "text": "材料提示：请携带完整检查资料供人工核对",
+      "bbox": [92, 310, 720, 356],
+      "confidence": 0.92
+    }
+  ],
+  "full_text": "合成演示材料｜出院日期：2025-01-18｜材料提示：请携带完整检查资料供人工核对。",
+  "document_date": "2025-01-18",
+  "hospital_name": "青禾县中心医院（虚构）",
+  "department": "住院部",
+  "document_type": "出院小结",
+  "source_highlights": ["材料提示：请携带完整检查资料供人工核对"],
+  "transfer_related_text": ""
+}

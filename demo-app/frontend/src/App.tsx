@@ -1,17 +1,47 @@
-import { AlertTriangle, CheckCircle2, FileSearch, RefreshCw, Upload, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Camera,
+  CheckCircle2,
+  ClipboardList,
+  FileSearch,
+  RefreshCw,
+  Upload,
+  X,
+} from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   assetUrl,
+  createIngestionJob,
   createUploadJob,
   getCases,
   getJob,
   getMaterial,
+  getPreConsultSummary,
   getTimeline,
+  reviewEvidence,
 } from "./api";
-import { evidenceStatusText, filterNodes, type NodeFilter, verificationStatusLabel } from "./model";
-import type { CaseSummary, EvidenceAnchor, Material, TimelineNode, TimelineResponse } from "./types";
+import {
+  evidenceStatusText,
+  filterNodes,
+  qualityStatusLabel,
+  type NodeFilter,
+  verificationStatusLabel,
+} from "./model";
+import type {
+  CaseSummary,
+  CaseSummaryV2,
+  EvidenceAnchor,
+  IngestionJob,
+  Material,
+  ReviewAction,
+  TimelineNode,
+  TimelineResponse,
+} from "./types";
 
 const SAFETY_NOTICE = "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。";
+
+type ActiveTab = "timeline" | "capture" | "summary";
 
 interface EvidenceSelection {
   material: Material;
@@ -23,8 +53,10 @@ export function App() {
   const [notice, setNotice] = useState(SAFETY_NOTICE);
   const [selectedCaseId, setSelectedCaseId] = useState("");
   const [timeline, setTimeline] = useState<TimelineResponse | null>(null);
+  const [summary, setSummary] = useState<CaseSummaryV2 | null>(null);
   const [activeNodeId, setActiveNodeId] = useState("");
   const [filter, setFilter] = useState<NodeFilter>({ kind: "all" });
+  const [activeTab, setActiveTab] = useState<ActiveTab>("timeline");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [evidence, setEvidence] = useState<EvidenceSelection | null>(null);
@@ -34,8 +66,11 @@ export function App() {
     "合成转院材料-1.pdf",
     "合成检验截图-2.jpg",
   ]);
+  const [ingestionJob, setIngestionJob] = useState<IngestionJob | null>(null);
+  const [captureMessage, setCaptureMessage] = useState("");
 
   useEffect(() => {
+    document.title = "转诊迹｜转院病历证据时间轴 Demo";
     void loadCaseList();
   }, []);
 
@@ -59,7 +94,7 @@ export function App() {
     }
   }
 
-  async function loadTimeline(caseId: string) {
+  async function loadTimeline(caseId: string, keepFilter = false) {
     setIsLoading(true);
     setError("");
     try {
@@ -67,13 +102,23 @@ export function App() {
       setTimeline(payload);
       setSelectedCaseId(caseId);
       setNotice(payload.notice);
-      setFilter({ kind: "all" });
+      if (!keepFilter) setFilter({ kind: "all" });
       setActiveNodeId(payload.timeline_nodes[0]?.node_id ?? "");
+      await refreshSummary(caseId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "无法加载时间轴。");
       setTimeline(null);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function refreshSummary(caseId = selectedCaseId) {
+    if (!caseId) return;
+    try {
+      setSummary(await getPreConsultSummary(caseId));
+    } catch {
+      setSummary(null);
     }
   }
 
@@ -96,10 +141,29 @@ export function App() {
     setIsEvidenceLoading(true);
     try {
       const material = await getMaterial(timeline.case_id, materialId);
-      setEvidence({ material, anchor });
+      const latestAnchor =
+        anchor && material.evidence_anchors.find((item) => item.anchor_id === anchor.anchor_id);
+      setEvidence({ material, anchor: latestAnchor ?? anchor });
     } finally {
       setIsEvidenceLoading(false);
     }
+  }
+
+  async function handleReview(anchor: EvidenceAnchor, action: ReviewAction, correctedValue?: string, note?: string) {
+    await reviewEvidence(anchor.anchor_id, {
+      action,
+      corrected_value: correctedValue,
+      note,
+    });
+    await loadTimeline(selectedCaseId, true);
+    if (evidence) {
+      const material = await getMaterial(selectedCaseId, evidence.material.material_id);
+      setEvidence({
+        material,
+        anchor: material.evidence_anchors.find((item) => item.anchor_id === anchor.anchor_id),
+      });
+    }
+    await refreshSummary(selectedCaseId);
   }
 
   async function handleUpload() {
@@ -116,13 +180,29 @@ export function App() {
     }
   }
 
+  async function handleIngestion(files: File[], source: "upload" | "camera") {
+    if (!selectedCaseId) return;
+    setCaptureMessage("正在上传合成材料并进行质量检测...");
+    try {
+      const job = await createIngestionJob(files, selectedCaseId, source);
+      setIngestionJob(job);
+      setCaptureMessage(job.message);
+      if (job.status === "timeline_generated") {
+        await loadTimeline(job.generated_case_id, true);
+        setActiveTab("timeline");
+      }
+    } catch (err) {
+      setCaptureMessage(err instanceof Error ? err.message : "合成材料处理失败。");
+    }
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="title-block">
-          <p className="eyebrow">zgcHack Demo</p>
-          <h1>转院病历时间轴</h1>
-          <p className="subtitle">按日期整理外院合成材料，保留 OCR、字段和原图定位。</p>
+          <p className="eyebrow">转诊迹</p>
+          <h1>转院病历证据时间轴</h1>
+          <p className="subtitle">把散落病历，连成可核验的转院时间轴。</p>
           <div className="notice" role="note">
             <AlertTriangle size={16} />
             <span>{notice}</span>
@@ -152,57 +232,155 @@ export function App() {
         </div>
       </header>
 
-      <main className="workspace">
-        <section className="main-pane" aria-label="时间轴工作区">
-          {timeline && <CaseOverview timeline={timeline} />}
-          <UploadStrip
-            fileNames={selectedFileNames}
-            status={uploadStatus}
-            onFilesChange={setSelectedFileNames}
-          />
-          <FilterBar
-            timeline={timeline}
-            filter={filter}
-            onFilter={setFilter}
-            onRetry={() => void loadCaseList()}
-          />
+      <nav className="top-tabs" aria-label="转诊迹工作区">
+        <TabButton active={activeTab === "timeline"} onClick={() => setActiveTab("timeline")} icon={<FileSearch size={17} />}>
+          医生时间轴
+        </TabButton>
+        <TabButton active={activeTab === "capture"} onClick={() => setActiveTab("capture")} icon={<Camera size={17} />}>
+          采集新材料
+        </TabButton>
+        <TabButton
+          active={activeTab === "summary"}
+          onClick={() => {
+            setActiveTab("summary");
+            void refreshSummary();
+          }}
+          icon={<ClipboardList size={17} />}
+        >
+          接诊前摘要
+        </TabButton>
+      </nav>
 
-          {isLoading && <LoadingState />}
-          {!isLoading && error && <ErrorState message={error} onRetry={() => void loadCaseList()} />}
-          {!isLoading && !error && timeline && (
-            <TimelineRail
-              timeline={timeline}
-              nodes={filteredNodes}
-              activeNodeId={activeNode?.node_id ?? ""}
-              onSelect={setActiveNodeId}
-              onOpenEvidence={openEvidence}
-            />
-          )}
-        </section>
+      {activeTab === "capture" ? (
+        <CaptureWorkbench
+          cases={cases}
+          selectedCaseId={selectedCaseId}
+          onCaseChange={(caseId) => void loadTimeline(caseId)}
+          job={ingestionJob}
+          message={captureMessage}
+          onProcess={handleIngestion}
+        />
+      ) : activeTab === "summary" ? (
+        <PreConsultSummary summary={summary} onRefresh={() => void refreshSummary()} />
+      ) : (
+        <TimelineWorkspace
+          timeline={timeline}
+          activeNode={activeNode}
+          filteredNodes={filteredNodes}
+          activeNodeId={activeNode?.node_id ?? ""}
+          filter={filter}
+          isLoading={isLoading}
+          error={error}
+          uploadStatus={uploadStatus}
+          selectedFileNames={selectedFileNames}
+          onFilesChange={setSelectedFileNames}
+          onFilter={setFilter}
+          onRetry={() => void loadCaseList()}
+          onSelect={setActiveNodeId}
+          onOpenEvidence={openEvidence}
+          evidenceLoading={isEvidenceLoading}
+        />
+      )}
 
-        <aside className="detail-pane" aria-label="节点详情与证据追溯">
-          <DetailPanel
-            timeline={timeline}
-            node={activeNode}
-            onOpenEvidence={openEvidence}
-            evidenceLoading={isEvidenceLoading}
-          />
-        </aside>
-      </main>
-
-      {evidence && <EvidenceModal selection={evidence} onClose={() => setEvidence(null)} />}
+      {evidence && (
+        <EvidenceModal
+          selection={evidence}
+          onClose={() => setEvidence(null)}
+          onReview={(anchor, action, correctedValue, note) => void handleReview(anchor, action, correctedValue, note)}
+        />
+      )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <button className={active ? "tab-button active" : "tab-button"} type="button" onClick={onClick}>
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function TimelineWorkspace({
+  timeline,
+  activeNode,
+  filteredNodes,
+  activeNodeId,
+  filter,
+  isLoading,
+  error,
+  uploadStatus,
+  selectedFileNames,
+  onFilesChange,
+  onFilter,
+  onRetry,
+  onSelect,
+  onOpenEvidence,
+  evidenceLoading,
+}: {
+  timeline: TimelineResponse | null;
+  activeNode?: TimelineNode;
+  filteredNodes: TimelineNode[];
+  activeNodeId: string;
+  filter: NodeFilter;
+  isLoading: boolean;
+  error: string;
+  uploadStatus: string;
+  selectedFileNames: string[];
+  onFilesChange: (names: string[]) => void;
+  onFilter: (filter: NodeFilter) => void;
+  onRetry: () => void;
+  onSelect: (nodeId: string) => void;
+  onOpenEvidence: (materialId: string, anchor?: EvidenceAnchor) => Promise<void>;
+  evidenceLoading: boolean;
+}) {
+  return (
+    <main className="workspace">
+      <section className="main-pane" aria-label="时间轴工作区">
+        {timeline && <CaseOverview timeline={timeline} />}
+        <UploadStrip fileNames={selectedFileNames} status={uploadStatus} onFilesChange={onFilesChange} />
+        <FilterBar timeline={timeline} filter={filter} onFilter={onFilter} onRetry={onRetry} />
+
+        {isLoading && <LoadingState />}
+        {!isLoading && error && <ErrorState message={error} onRetry={onRetry} />}
+        {!isLoading && !error && timeline && (
+          <TimelineRail
+            timeline={timeline}
+            nodes={filteredNodes}
+            activeNodeId={activeNodeId}
+            onSelect={onSelect}
+            onOpenEvidence={onOpenEvidence}
+          />
+        )}
+      </section>
+
+      <aside className="detail-pane" aria-label="节点详情与证据追溯">
+        <DetailPanel timeline={timeline} node={activeNode} onOpenEvidence={onOpenEvidence} evidenceLoading={evidenceLoading} />
+      </aside>
+    </main>
   );
 }
 
 function CaseOverview({ timeline }: { timeline: TimelineResponse }) {
   const abnormalCount = timeline.timeline_nodes.filter((node) => node.has_abnormal_flag).length;
+  const liveCount = Object.values(timeline.materials).filter((material) => material.processing_source === "现场合成材料处理").length;
   const items = [
     ["患者", `${timeline.patient.display_name}，${timeline.patient.sex}，${timeline.patient.age_display}`],
     ["转院路径", `${timeline.transfer.origin_hospital} → ${timeline.transfer.destination_hospital}`],
     ["目标科室", timeline.transfer.destination_department],
     ["材料覆盖", `${timeline.transfer.coverage}｜${timeline.timeline_nodes.length} 个节点`],
-    ["异常字段待核验", `${abnormalCount} 个节点含标记字段`],
+    ["现场材料", `${liveCount} 份现场合成材料｜${abnormalCount} 个节点含标记字段`],
   ];
   return (
     <section className="case-overview" aria-label="转院摘要">
@@ -228,8 +406,8 @@ function UploadStrip({
   return (
     <section className="upload-strip" aria-label="模拟上传处理">
       <div>
-        <div className="section-kicker">模拟上传</div>
-        <p>仅发送合成演示文件名，不读取或上传文件内容。</p>
+        <div className="section-kicker">兼容演示上传</div>
+        <p>旧版 fixture 流程仍保留；真实字节上传请使用“采集新材料”。</p>
       </div>
       <label className="file-picker">
         <FileSearch size={17} />
@@ -264,11 +442,7 @@ function FilterBar({
 }) {
   return (
     <section className="filter-bar" aria-label="时间轴筛选">
-      <button
-        className={filter.kind === "all" ? "filter active" : "filter"}
-        type="button"
-        onClick={() => onFilter({ kind: "all" })}
-      >
+      <button className={filter.kind === "all" ? "filter active" : "filter"} type="button" onClick={() => onFilter({ kind: "all" })}>
         全部节点
       </button>
       <button
@@ -408,18 +582,19 @@ function DetailPanel({
       <section className="field-list" aria-label="结构化字段">
         {Object.entries(node.structured_fields).map(([key, value]) => {
           const anchor = evidenceByField.get(key);
+          const confidence = anchor?.ocr_confidence ?? anchor?.confidence;
           return (
             <button
-              className={anchor?.confidence && anchor.confidence < 0.85 ? "field-item low" : "field-item"}
+              className={confidence && confidence < 0.85 ? "field-item low" : "field-item"}
               type="button"
               key={key}
               onClick={() => anchor && void onOpenEvidence(anchor.material_id, anchor)}
             >
               <span>{key}</span>
               <strong>{value}</strong>
-              {anchor && (
+              {anchor && confidence && (
                 <em>
-                  {evidenceStatusText(anchor.confidence)}｜OCR {Math.round(anchor.confidence * 100)}%
+                  {evidenceStatusText(confidence)}｜OCR {Math.round(confidence * 100)}%
                 </em>
               )}
             </button>
@@ -434,7 +609,7 @@ function DetailPanel({
             <FileSearch size={16} />
             <span>{anchor.display_value}</span>
             <small>
-              {anchor.page_or_image}｜{verificationStatusLabel(anchor.verification_status)}
+              {anchor.bbox ? "原图 bbox 高亮" : "旧版定位说明"}｜{verificationStatusLabel(anchor.verification_status)}
             </small>
           </button>
         ))}
@@ -456,8 +631,226 @@ function DetailPanel({
   );
 }
 
-function EvidenceModal({ selection, onClose }: { selection: EvidenceSelection; onClose: () => void }) {
+function CaptureWorkbench({
+  cases,
+  selectedCaseId,
+  onCaseChange,
+  job,
+  message,
+  onProcess,
+}: {
+  cases: CaseSummary[];
+  selectedCaseId: string;
+  onCaseChange: (caseId: string) => void;
+  job: IngestionJob | null;
+  message: string;
+  onProcess: (files: File[], source: "upload" | "camera") => Promise<void>;
+}) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [cameraError, setCameraError] = useState("");
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+    return () => {
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [stream]);
+
+  async function openCamera() {
+    setCameraError("");
+    try {
+      const media = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(media);
+    } catch {
+      setCameraError("摄像头权限不可用，可继续使用文件上传。");
+    }
+  }
+
+  async function captureFrame() {
+    if (!videoRef.current) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth || 900;
+    canvas.height = videoRef.current.videoHeight || 620;
+    canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (blob) {
+      await onProcess([new File([blob], "camera-capture.png", { type: "image/png" })], "camera");
+    }
+  }
+
+  return (
+    <main className="single-pane">
+      <section className="capture-grid">
+        <div className="capture-panel">
+          <div className="panel-heading">
+            <span>采集新材料</span>
+            <h2>现场合成材料处理</h2>
+            <p>{SAFETY_NOTICE}</p>
+          </div>
+          <label className="control-label" htmlFor="capture-case">
+            接入病例
+          </label>
+          <select id="capture-case" value={selectedCaseId} onChange={(event) => onCaseChange(event.target.value)}>
+            {cases.map((item) => (
+              <option key={item.case_id} value={item.case_id}>
+                {item.patient_display}｜{item.destination_department}
+              </option>
+            ))}
+          </select>
+
+          <label className="dropzone">
+            <Upload size={22} />
+            <strong>上传 PNG/JPG 合成材料</strong>
+            <span>单次最多 10 张，每张最大 10 MB</span>
+            <input
+              aria-label="上传合成材料图片"
+              type="file"
+              accept=".png,.jpg,.jpeg"
+              multiple
+              onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
+            />
+          </label>
+          {files.length > 0 && (
+            <div className="selected-files">
+              {files.map((file) => (
+                <span key={`${file.name}-${file.size}`}>{file.name}</span>
+              ))}
+            </div>
+          )}
+          <button className="icon-button primary" type="button" disabled={!files.length} onClick={() => void onProcess(files, "upload")}>
+            <Upload size={17} />
+            开始处理
+          </button>
+        </div>
+
+        <div className="capture-panel">
+          <div className="panel-heading">
+            <span>摄像头</span>
+            <h2>单帧采集合成材料</h2>
+            <p>请只拍摄提供的合成演示材料。</p>
+          </div>
+          <div className="camera-box">
+            {stream ? <video ref={videoRef} autoPlay playsInline muted /> : <Camera size={38} />}
+          </div>
+          <div className="camera-actions">
+            <button className="icon-button" type="button" onClick={() => void openCamera()}>
+              <Camera size={17} />
+              开启摄像头
+            </button>
+            <button className="icon-button primary" type="button" disabled={!stream} onClick={() => void captureFrame()}>
+              拍摄本页
+            </button>
+          </div>
+          {cameraError && <div className="inline-warning">{cameraError}</div>}
+        </div>
+      </section>
+
+      <ProcessingStatus job={job} message={message} />
+    </main>
+  );
+}
+
+function ProcessingStatus({ job, message }: { job: IngestionJob | null; message: string }) {
+  return (
+    <section className="processing-panel" aria-label="处理状态">
+      <div className="panel-heading">
+        <span>处理状态</span>
+        <h2>{message || "等待合成材料"}</h2>
+      </div>
+      {job && (
+        <>
+          <div className="stepper">
+            {job.steps.map((step) => (
+              <div className={`step ${step.status}`} key={step.name}>
+                <strong>{step.name}</strong>
+                <span>{step.status === "completed" && step.mode ? "预置合成 OCR 演示回放" : step.status}</span>
+              </div>
+            ))}
+          </div>
+          <div className="quality-grid">
+            {job.materials.map((material, index) => (
+              <div className={`quality-card ${material.quality.status}`} key={`${material.source_file}-${index}`}>
+                <strong>{material.source_file ?? material.title}</strong>
+                <span>{qualityStatusLabel(material.quality.status)}</span>
+                <small>
+                  blur {material.quality.blur_score}｜glare {material.quality.glare_ratio}
+                </small>
+                {material.quality.messages.map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function PreConsultSummary({ summary, onRefresh }: { summary: CaseSummaryV2 | null; onRefresh: () => void }) {
+  if (!summary) {
+    return (
+      <main className="single-pane">
+        <div className="empty-state">
+          <ClipboardList size={28} />
+          <strong>暂无摘要数据</strong>
+          <button className="icon-button primary" type="button" onClick={onRefresh}>
+            <RefreshCw size={17} />
+            重新生成
+          </button>
+        </div>
+      </main>
+    );
+  }
+  return (
+    <main className="single-pane">
+      <section className="summary-page">
+        <div className="panel-heading">
+          <span>接诊前摘要</span>
+          <h2>转诊迹｜合成演示接诊前整理摘要</h2>
+          <p>{summary.boundary}</p>
+        </div>
+        <div className="summary-grid">
+          <div><span>患者</span><strong>{summary.patient_display}</strong></div>
+          <div><span>转院路径</span><strong>{summary.transfer_path}</strong></div>
+          <div><span>覆盖时间</span><strong>{summary.coverage}</strong></div>
+          <div><span>节点/现场材料</span><strong>{summary.node_count} 个节点｜{summary.uploaded_material_count} 份</strong></div>
+          <div><span>已确认字段</span><strong>{summary.review_counts.confirmed}</strong></div>
+          <div><span>待核验/需复核字段</span><strong>{summary.review_counts.needs_review}</strong></div>
+        </div>
+        <section className="summary-section">
+          <h3>与转院原因相关的节点</h3>
+          {summary.transfer_related_nodes.map((node) => (
+            <p key={`${node.date}-${node.headline}`}>{node.date}｜{node.document_type}｜{node.headline}</p>
+          ))}
+        </section>
+        <section className="missing-box">
+          <h3>材料完整性提示</h3>
+          {summary.missing_material_reminders.map((item) => (
+            <p key={item}>{item}</p>
+          ))}
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function EvidenceModal({
+  selection,
+  onClose,
+  onReview,
+}: {
+  selection: EvidenceSelection;
+  onClose: () => void;
+  onReview: (anchor: EvidenceAnchor, action: ReviewAction, correctedValue?: string, note?: string) => void;
+}) {
   const anchor = selection.anchor;
+  const [correctedValue, setCorrectedValue] = useState(anchor?.display_value ?? "");
+  const confidence = anchor ? anchor.ocr_confidence ?? anchor.confidence : undefined;
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="证据材料视图">
       <div className="evidence-modal">
@@ -470,18 +863,13 @@ function EvidenceModal({ selection, onClose }: { selection: EvidenceSelection; o
           <p>{SAFETY_NOTICE}</p>
         </div>
         <div className="modal-grid">
-          <div className="source-image-wrap">
-            <img src={assetUrl(selection.material.image_url)} alt={`${selection.material.title}合成原始材料`} />
-            {anchor && <div className="locator-highlight">定位：{anchor.locator_text}</div>}
-          </div>
+          <EvidenceCanvas material={selection.material} anchor={anchor} />
           <div className="source-detail">
-            {anchor ? (
+            {anchor && confidence ? (
               <>
-                <div className={anchor.confidence < 0.85 ? "confidence low" : "confidence"}>
+                <div className={confidence < 0.85 ? "confidence low" : "confidence"}>
                   <CheckCircle2 size={16} />
-                  <span>
-                    OCR 置信度 {Math.round(anchor.confidence * 100)}%｜{evidenceStatusText(anchor.confidence)}
-                  </span>
+                  <span>OCR 置信度 {Math.round(confidence * 100)}%｜{evidenceStatusText(confidence)}</span>
                 </div>
                 <dl>
                   <dt>字段</dt>
@@ -489,10 +877,27 @@ function EvidenceModal({ selection, onClose }: { selection: EvidenceSelection; o
                   <dt>提取值</dt>
                   <dd>{anchor.display_value}</dd>
                   <dt>位置</dt>
-                  <dd>{anchor.page_or_image}</dd>
+                  <dd>{anchor.bbox ? "原图 bbox 高亮" : anchor.page_or_image}</dd>
                   <dt>核验状态</dt>
                   <dd>{verificationStatusLabel(anchor.verification_status)}</dd>
+                  <dt>OCR 模式</dt>
+                  <dd>{selection.material.ocr_mode_label ?? "旧版定位说明"}</dd>
                 </dl>
+                <div className="review-actions" aria-label="医生核验操作">
+                  <button type="button" className="icon-button primary" onClick={() => onReview(anchor, "confirmed", undefined, "确认正确")}>
+                    确认正确
+                  </button>
+                  <button type="button" className="icon-button" onClick={() => onReview(anchor, "needs_review", undefined, "标记需复核")}>
+                    标记需复核
+                  </button>
+                  <label>
+                    修改字段
+                    <input value={correctedValue} onChange={(event) => setCorrectedValue(event.target.value)} />
+                  </label>
+                  <button type="button" className="icon-button" onClick={() => onReview(anchor, "corrected", correctedValue, "演示修改字段")}>
+                    保存修改
+                  </button>
+                </div>
               </>
             ) : (
               <p className="muted-text">该材料没有绑定关键字段证据。</p>
@@ -504,6 +909,39 @@ function EvidenceModal({ selection, onClose }: { selection: EvidenceSelection; o
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function EvidenceCanvas({ material, anchor }: { material: Material; anchor?: EvidenceAnchor }) {
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const [box, setBox] = useState<CSSProperties | null>(null);
+
+  function updateBox() {
+    const image = imageRef.current;
+    if (!image || !anchor?.bbox || !image.naturalWidth || !image.naturalHeight) {
+      setBox(null);
+      return;
+    }
+    const [x1, y1, x2, y2] = anchor.bbox;
+    setBox({
+      left: `${(x1 / image.naturalWidth) * 100}%`,
+      top: `${(y1 / image.naturalHeight) * 100}%`,
+      width: `${((x2 - x1) / image.naturalWidth) * 100}%`,
+      height: `${((y2 - y1) / image.naturalHeight) * 100}%`,
+    });
+  }
+
+  return (
+    <div className="source-image-wrap">
+      <img ref={imageRef} src={assetUrl(material.image_url)} alt={`${material.title}合成原始材料`} onLoad={updateBox} />
+      {box ? (
+        <div className="bbox-highlight" style={box}>
+          {anchor?.field_key}
+        </div>
+      ) : (
+        anchor && <div className="locator-highlight">定位：{anchor.locator_text}</div>
+      )}
     </div>
   );
 }

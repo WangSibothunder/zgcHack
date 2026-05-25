@@ -28,6 +28,6 @@
 ## GitHub delivery
 
 - Repository name: `zgcHack`
-- Visibility: private
+- Visibility: public synthetic demo
 - Commit SHA:
 - Push command output:

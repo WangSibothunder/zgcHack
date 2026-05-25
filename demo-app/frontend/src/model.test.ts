@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evidenceStatusText, filterNodes, type NodeFilter } from "./model";
+import { evidenceStatusText, filterNodes, qualityStatusLabel, type NodeFilter } from "./model";
 import type { TimelineNode } from "./types";
 
 const baseNode = (overrides: Partial<TimelineNode>): TimelineNode => ({
@@ -53,5 +53,13 @@ describe("evidence confidence labels", () => {
   it("marks low confidence evidence for review", () => {
     expect(evidenceStatusText(0.82)).toBe("低置信度，待核验");
     expect(evidenceStatusText(0.91)).toBe("待医生核验");
+  });
+});
+
+describe("quality labels", () => {
+  it("labels capture quality states", () => {
+    expect(qualityStatusLabel("pass")).toBe("质量通过");
+    expect(qualityStatusLabel("warning")).toBe("有质量提示");
+    expect(qualityStatusLabel("retake_required")).toBe("需重拍");
   });
 });

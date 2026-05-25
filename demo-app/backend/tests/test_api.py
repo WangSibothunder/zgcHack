@@ -1,8 +1,18 @@
 from fastapi.testclient import TestClient
+from pathlib import Path
+import pytest
 
 from app import app
+from services.storage import clear_runtime
 
 client = TestClient(app)
+PACK_ROOT = Path(__file__).resolve().parents[3]
+SAMPLES = PACK_ROOT / "demo-data" / "capture-samples"
+
+
+@pytest.fixture(autouse=True)
+def reset_runtime_between_tests() -> None:
+    clear_runtime()
 
 
 def test_health() -> None:
@@ -99,3 +109,97 @@ def test_unknown_case_returns_404() -> None:
 def test_unknown_job_returns_404() -> None:
     response = client.get("/api/v1/demo/jobs/job-not-present")
     assert response.status_code == 404
+
+
+def test_v2_rejects_upload_without_synthetic_acknowledgement() -> None:
+    sample = SAMPLES / "originals" / "cardiac_lab_clear.png"
+    with sample.open("rb") as fp:
+        response = client.post(
+            "/api/v2/demo/ingestions",
+            data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "false"},
+            files={"files": ("cardiac_lab_clear.png", fp, "image/png")},
+        )
+    assert response.status_code == 400
+    assert "合成演示材料" in response.json()["detail"]
+
+
+def test_v2_rejects_unsupported_format() -> None:
+    response = client.post(
+        "/api/v2/demo/ingestions",
+        data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "true"},
+        files={"files": ("not-supported.txt", b"synthetic", "text/plain")},
+    )
+    assert response.status_code == 400
+    assert "仅支持" in response.json()["detail"]
+
+
+def test_v2_blurred_sample_requires_retake() -> None:
+    client.post("/api/v2/demo/runtime/reset")
+    sample = SAMPLES / "degraded" / "cardiac_lab_blurred.png"
+    with sample.open("rb") as fp:
+        response = client.post(
+            "/api/v2/demo/ingestions",
+            data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "true"},
+            files={"files": ("cardiac_lab_blurred.png", fp, "image/png")},
+        )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "retake_required"
+    assert payload["materials"][0]["quality"]["status"] == "retake_required"
+    assert not payload["generated_node_ids"]
+
+
+def test_v2_clear_sample_generates_timeline_material_and_bbox_evidence() -> None:
+    client.post("/api/v2/demo/runtime/reset")
+    sample = SAMPLES / "originals" / "cardiac_lab_clear.png"
+    with sample.open("rb") as fp:
+        response = client.post(
+            "/api/v2/demo/ingestions",
+            data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "true"},
+            files={"files": ("cardiac_lab_clear.png", fp, "image/png")},
+        )
+    assert response.status_code == 200
+    job = response.json()
+    assert job["status"] == "timeline_generated"
+    assert job["steps"][-1]["status"] == "completed"
+    timeline = client.get("/api/v1/demo/cases/demo-cardiac-transfer-001/timeline").json()
+    runtime_nodes = [node for node in timeline["timeline_nodes"] if node.get("processing_source") == "现场合成材料处理"]
+    assert runtime_nodes
+    evidence = runtime_nodes[0]["evidence_anchors"][0]
+    assert evidence["bbox"] == [96, 310, 610, 366]
+    material = client.get(
+        f"/api/v2/demo/cases/demo-cardiac-transfer-001/materials/{evidence['material_id']}"
+    ).json()
+    assert material["ocr_mode"] == "deterministic_synthetic"
+    assert material["quality"]["status"] == "pass"
+
+
+def test_v2_review_persists_and_summary_counts_update() -> None:
+    client.post("/api/v2/demo/runtime/reset")
+    sample = SAMPLES / "originals" / "cardiac_lab_clear.png"
+    with sample.open("rb") as fp:
+        job = client.post(
+            "/api/v2/demo/ingestions",
+            data={"case_id": "demo-cardiac-transfer-001", "source": "upload", "synthetic_acknowledged": "true"},
+            files={"files": ("cardiac_lab_clear.png", fp, "image/png")},
+        ).json()
+    timeline = client.get("/api/v1/demo/cases/demo-cardiac-transfer-001/timeline").json()
+    runtime_node = next(node for node in timeline["timeline_nodes"] if job["generated_node_ids"][0] == node["node_id"])
+    anchor_id = runtime_node["evidence_anchors"][0]["anchor_id"]
+    review = client.post(
+        f"/api/v2/demo/evidence/{anchor_id}/reviews",
+        json={"action": "confirmed", "note": "演示确认", "reviewer_role": "接诊医生（演示）"},
+    )
+    assert review.status_code == 200
+    assert review.json()["synthetic"] is True
+    refreshed = client.get("/api/v1/demo/cases/demo-cardiac-transfer-001/timeline").json()
+    refreshed_anchor = next(
+        anchor
+        for node in refreshed["timeline_nodes"]
+        for anchor in node["evidence_anchors"]
+        if anchor["anchor_id"] == anchor_id
+    )
+    assert refreshed_anchor["verification_status"] == "confirmed"
+    summary = client.get("/api/v2/demo/cases/demo-cardiac-transfer-001/summary").json()
+    assert summary["review_counts"]["confirmed"] >= 1
+    assert summary["uploaded_material_count"] >= 1

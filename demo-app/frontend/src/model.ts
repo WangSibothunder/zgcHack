@@ -26,3 +26,10 @@ export function verificationStatusLabel(status: string): string {
   if (status === "needs_review") return "需复核";
   return "未核验";
 }
+
+export function qualityStatusLabel(status: string): string {
+  if (status === "pass") return "质量通过";
+  if (status === "warning") return "有质量提示";
+  if (status === "retake_required") return "需重拍";
+  return "待处理";
+}

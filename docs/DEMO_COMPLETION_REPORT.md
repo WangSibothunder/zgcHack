@@ -43,6 +43,6 @@
 ## GitHub Delivery
 
 - Repository name: `zgcHack`.
-- Visibility: private.
+- Visibility: public, per current `转诊迹` public synthetic demo policy.
 - Local commit SHA: `0cde353` for `feat: deliver synthetic transfer timeline demo`; a follow-up report commit records this delivery status.
-- Push command output: blocked locally because `gh auth status` returned `zsh:1: command not found: gh`. Install GitHub CLI and authenticate, then run the private repo push command from `docs/GITHUB_DELIVERY.md`.
+- Push command output: previously blocked locally because `gh auth status` returned `zsh:1: command not found: gh`. Install GitHub CLI and authenticate, then push to the existing public repository following `docs/GITHUB_DELIVERY.md`.

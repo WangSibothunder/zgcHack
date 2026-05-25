@@ -35,4 +35,4 @@
 
 - [ ] 形成 `docs/DEMO_COMPLETION_REPORT.md`，记录验收证据。
 - [ ] Git 提交历史清晰。
-- [ ] 已在通过全部验收后创建私有 GitHub 仓库 `zgcHack` 并推送。
+- [ ] 已在通过全部验收和 public 安全扫描后推送到公开 GitHub 仓库 `WangSibothunder/zgcHack`。

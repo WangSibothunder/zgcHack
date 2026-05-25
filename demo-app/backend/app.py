@@ -6,10 +6,15 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+from services.ingestion import create_ingestion_job, find_anchor, get_job as get_ingestion_job, merge_runtime_nodes
+from services.review_store import apply_reviews_to_case, save_review
+from services.storage import RUNTIME_DIR, clear_runtime, ensure_runtime_dirs
+from services.summary import build_summary
 
 APP_DIR = Path(__file__).resolve().parent
 PACK_ROOT = APP_DIR.parent.parent
@@ -19,6 +24,7 @@ ASSETS_DIR = DATA_DIR / "assets"
 
 NOTICE = "合成演示数据，仅用于材料整理演示，不构成诊断或治疗建议。"
 ALLOWED_VERIFICATION_STATUSES = {"unreviewed", "confirmed", "needs_review"}
+ensure_runtime_dirs()
 
 
 class UploadRequest(BaseModel):
@@ -26,17 +32,31 @@ class UploadRequest(BaseModel):
     file_names: list[str] = Field(default_factory=list, max_length=20)
 
 
+class ReviewRequest(BaseModel):
+    action: str
+    corrected_value: str | None = None
+    note: str = ""
+    reviewer_role: str = "接诊医生（演示）"
+
+
 def load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as fp:
         return json.load(fp)
 
 
-def load_case(case_id: str) -> dict[str, Any]:
+def load_fixture_case(case_id: str) -> dict[str, Any]:
     path = CASES_DIR / f"{case_id}.json"
     if not path.exists():
         raise HTTPException(status_code=404, detail="未找到该合成演示病例。")
     case = load_json(path)
     validate_case(case)
+    return case
+
+
+def load_case(case_id: str) -> dict[str, Any]:
+    case = load_fixture_case(case_id)
+    case = merge_runtime_nodes(case)
+    case = apply_reviews_to_case(case)
     return case
 
 
@@ -50,7 +70,7 @@ def validate_index() -> dict[str, Any]:
         if not case_id or case_id in seen:
             raise ValueError(f"病例 ID 缺失或重复: {case_id}")
         seen.add(case_id)
-        case = load_case(case_id)
+        case = load_fixture_case(case_id)
         if item.get("node_count") != len(case.get("timeline_nodes", [])):
             raise ValueError(f"病例索引节点数不一致: {case_id}")
         abnormal_count = sum(1 for node in case["timeline_nodes"] if node.get("has_abnormal_flag"))
@@ -121,16 +141,17 @@ def validate_evidence(ev: dict[str, Any], materials: dict[str, Any]) -> None:
 
 def load_all_cases() -> dict[str, dict[str, Any]]:
     index = validate_index()
-    return {item["case_id"]: load_case(item["case_id"]) for item in index["cases"]}
+    return {item["case_id"]: load_fixture_case(item["case_id"]) for item in index["cases"]}
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    ensure_runtime_dirs()
     load_all_cases()
     yield
 
 
-app = FastAPI(title="zgcHack Synthetic Demo API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="转诊迹 Synthetic Demo API", version="0.8.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -138,11 +159,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+app.mount("/runtime-assets", StaticFiles(directory=RUNTIME_DIR), name="runtime-assets")
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "zgcHack-demo-api", "mode": "synthetic-demo"}
+    return {"status": "ok", "service": "zhuanzhenji-demo-api", "mode": "synthetic-demo"}
 
 
 @app.get("/api/v1/demo/cases")
@@ -191,3 +213,53 @@ def get_job(job_id: str) -> dict[str, Any]:
         "generated_case_id": case_id,
         "message": "合成材料处理完成，已生成演示时间轴。",
     }
+
+
+@app.post("/api/v2/demo/ingestions")
+async def create_ingestion(
+    files: list[UploadFile] = File(...),
+    case_id: str = Form("demo-cardiac-transfer-001"),
+    source: str = Form("upload"),
+    synthetic_acknowledged: bool = Form(False),
+) -> dict[str, Any]:
+    load_case(case_id)
+    try:
+        return await create_ingestion_job(files, case_id, source, synthetic_acknowledged)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/v2/demo/jobs/{job_id}")
+def get_ingestion_status(job_id: str) -> dict[str, Any]:
+    job = get_ingestion_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="未找到该合成处理任务。")
+    return job
+
+
+@app.get("/api/v2/demo/cases/{case_id}/materials/{material_id}")
+def get_v2_material(case_id: str, material_id: str) -> dict[str, Any]:
+    return get_material(case_id, material_id)
+
+
+@app.post("/api/v2/demo/evidence/{anchor_id}/reviews")
+def review_evidence(anchor_id: str, payload: ReviewRequest) -> dict[str, Any]:
+    cases = [load_case(item["case_id"]) for item in validate_index()["cases"]]
+    anchor = next((found for case in cases if (found := find_anchor(case, anchor_id))), None)
+    if anchor is None:
+        raise HTTPException(status_code=404, detail="未找到该证据字段。")
+    try:
+        return save_review(anchor_id, payload.model_dump(), anchor["display_value"])
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/v2/demo/cases/{case_id}/summary")
+def get_case_summary(case_id: str) -> dict[str, Any]:
+    return build_summary(load_case(case_id))
+
+
+@app.post("/api/v2/demo/runtime/reset")
+def reset_runtime() -> dict[str, Any]:
+    clear_runtime()
+    return {"synthetic": True, "status": "reset", "message": "已清空 synthetic runtime 演示数据。"}

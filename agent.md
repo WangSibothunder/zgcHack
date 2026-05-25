@@ -3,15 +3,27 @@
 Codex 官方识别的仓库指令文件名是 `AGENTS.md`。本文件保留以满足团队内部称呼；请以同目录的 `AGENTS.md` 作为执行入口。
 
 
-# zgcHack Repository Instructions
+# zgcHack / 转诊迹 Repository Instructions
 
 ## 1. Product mission and non-negotiable boundary
 
-This repository builds a hackathon demo for **transfer-patient medical record timeline reconstruction**. A patient arrives at a new hospital with external paper records or report screenshots. The system organizes those records into a chronological, evidence-traceable timeline so a receiving clinician can review prior context faster.
+This repository builds **转诊迹**, a hackathon demo for **transfer-patient medical record timeline reconstruction**. A patient arrives at a new hospital with external paper records or report screenshots. The system organizes those records into a chronological, evidence-traceable timeline so a receiving clinician can review prior context faster.
 
 The product is **not** a diagnostic system, treatment recommender, triage engine, or medical decision maker. Never phrase UI text, API responses, README claims, or pitch material as medical diagnosis or treatment guidance.
 
 During the demo phase, use **synthetic fixtures only**. Never introduce real personally identifiable health information, real patient images, real medical identifiers, or copied hospital documents.
+
+## 1.1 Public repository policy
+
+The GitHub repository `WangSibothunder/zgcHack` is intentionally a **public** hackathon showcase repository. Do not change it to private, do not create a replacement private repository, and do not describe the delivery target as private.
+
+Public visibility is allowed only because the repository is synthetic-only. The following are non-negotiable:
+
+- Commit only fictional cases, synthetic images, synthetic OCR, mock accounts, and example configuration.
+- Never commit real medical records, real report screenshots, real patient names, visit numbers, phone numbers, addresses, real OCR text, or identifiable hospital documents.
+- Never commit API keys, `.env` files, tokens, cookies, credentials, local upload folders, database runtime files, OCR caches, or logs.
+- Any live-upload or camera-capture feature must write generated files only under ignored runtime paths such as `runtime/` or `demo-app/backend/runtime/`.
+- README and release notes must say the public repository demonstrates a synthetic-material workflow only; future real-material use requires a separate compliant environment.
 
 ## 2. Demo definition of done
 
@@ -36,7 +48,7 @@ Read `docs/DEMO_ACCEPTANCE.md` for the acceptance checklist and do not declare c
 Before editing:
 1. Inspect the actual repository tree, package manager, existing frontend stack, and current scripts.
 2. Preserve the uploaded visual prototype as the design baseline; migrate hard-coded case records behind an API rather than discarding interaction decisions.
-3. Read `docs/API_CONTRACT.md`, `docs/SYNTHETIC_DATA_POLICY.md`, and relevant skills under `.codex/skills/`.
+3. Read `docs/API_CONTRACT.md`, `docs/SYNTHETIC_DATA_POLICY.md`, the active PRD when present (`docs/PRD_V0_8_ZHUANZHENJI.md` or `docs/zgcHack_v0.8_PRD_转诊迹_Codex执行文档.md`), and relevant skills under `.codex/skills/`.
 
 Implementation order:
 1. Establish or confirm repository structure and run commands.
@@ -44,7 +56,7 @@ Implementation order:
 3. Connect frontend to API; preserve timeline and evidence UX.
 4. Implement filtering, upload simulation, states, and safety notices.
 5. Add tests, seed validation, README, and demo walkthrough.
-6. Only after acceptance passes, initialize/push the repository to GitHub following `docs/GITHUB_DELIVERY.md`.
+6. Only after acceptance passes, commit and push to the existing public GitHub repository following `docs/GITHUB_DELIVERY.md`.
 
 When blocked, do not stop after describing the issue. Diagnose it, implement the smallest safe correction, rerun checks, and update the evidence log.
 
@@ -99,9 +111,9 @@ Essential endpoints:
 
 - Make small coherent commits with meaningful messages.
 - Do not rewrite or delete the supplied prototype without preserving it under `reference/`.
-- Default the GitHub repository to **private** because the project concerns medical-document workflows, even though demo records are synthetic.
+- The intended GitHub repository is the existing public repo `WangSibothunder/zgcHack`; keep the repository public for hackathon showcase purposes.
 - Do not push until tests and the demo acceptance checklist pass.
-- Before pushing, run a secret scan or at minimum inspect tracked files for tokens, `.env`, credentials, and unintended personal data.
+- Before pushing, run a public-repo safety scan or at minimum inspect tracked files for tokens, `.env`, credentials, runtime upload files, databases, logs, and unintended personal or medical data.
 - The intended final repository name is `zgcHack`.
 
 ## 9. Codex skills to use

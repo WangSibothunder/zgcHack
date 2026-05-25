@@ -16,4 +16,4 @@
 - 将数据/API 接入你们实际前端项目，而非只运行参考页。
 - 根据实际技术栈完成 build、lint、typecheck 和浏览器全流程验收。
 - 填写 `DEMO_COMPLETION_REPORT.md`。
-- 在全部验收通过后创建并推送私有 GitHub 仓库 `zgcHack`。
+- 在全部验收和 public 安全扫描通过后推送到公开 GitHub 仓库 `WangSibothunder/zgcHack`。

@@ -1,0 +1,24 @@
+{
+  "ocr_mode": "deterministic_synthetic",
+  "blocks": [
+    {
+      "block_id": "ocr-note-date",
+      "text": "就诊日期：2025-01-17",
+      "bbox": [80, 120, 430, 158],
+      "confidence": 0.95
+    },
+    {
+      "block_id": "ocr-note-transfer",
+      "text": "复诊记录：转上级医院进一步评估",
+      "bbox": [92, 300, 660, 350],
+      "confidence": 0.92
+    }
+  ],
+  "full_text": "合成演示材料｜就诊日期：2025-01-17｜复诊记录：转上级医院进一步评估。",
+  "document_date": "2025-01-17",
+  "hospital_name": "青禾县中心医院（虚构）",
+  "department": "心内科",
+  "document_type": "门诊记录",
+  "source_highlights": ["复诊记录：转上级医院进一步评估"],
+  "transfer_related_text": "转上级医院进一步评估"
+}
